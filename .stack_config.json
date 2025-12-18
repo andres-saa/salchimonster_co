@@ -1,0 +1,22 @@
+{
+  "project": "salchimonster_colombia",
+  "domain": "salchimonster.com",
+  "email": "arrechea.saa.a@gmail.com",
+  "staging": false,
+  "use_pg": false,
+  "use_mongo": false,
+  "use_redis": false,
+  "backs": [
+    "socket"
+  ],
+  "fronts": [
+    {
+      "name": "es",
+      "kind": "nuxt"
+    },
+    {
+      "name": "main",
+      "kind": "nuxt"
+    }
+  ]
+}

@@ -1,0 +1,73 @@
+
+server {
+    listen 443 ssl;
+    http2 on;
+    server_name es.salchimonster.com;
+
+    ssl_certificate /etc/letsencrypt/live/es.salchimonster.com/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/es.salchimonster.com/privkey.pem;
+    include /etc/nginx/conf.d/ssl_params.conf;
+
+    location / {
+        proxy_pass http://front_es:3000;
+        include /etc/nginx/proxy_params.conf;
+    }
+}
+
+server {
+    listen 443 ssl;
+    http2 on;
+    server_name www.es.salchimonster.com;
+
+    ssl_certificate /etc/letsencrypt/live/www.es.salchimonster.com/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/www.es.salchimonster.com/privkey.pem;
+    include /etc/nginx/conf.d/ssl_params.conf;
+
+    location / {
+        return 301 https://es.salchimonster.com$request_uri;
+    }
+}
+
+server {
+    listen 443 ssl;
+    http2 on;
+    server_name main.salchimonster.com;
+
+    ssl_certificate /etc/letsencrypt/live/main.salchimonster.com/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/main.salchimonster.com/privkey.pem;
+    include /etc/nginx/conf.d/ssl_params.conf;
+
+    location / {
+        proxy_pass http://front_main:3000;
+        include /etc/nginx/proxy_params.conf;
+    }
+}
+
+server {
+    listen 443 ssl;
+    http2 on;
+    server_name www.main.salchimonster.com;
+
+    ssl_certificate /etc/letsencrypt/live/www.main.salchimonster.com/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/www.main.salchimonster.com/privkey.pem;
+    include /etc/nginx/conf.d/ssl_params.conf;
+
+    location / {
+        return 301 https://main.salchimonster.com$request_uri;
+    }
+}
+
+server {
+    listen 443 ssl;
+    http2 on;
+    server_name api.socket.salchimonster-colombia.salchimonster.com;
+
+    ssl_certificate /etc/letsencrypt/live/api.socket.salchimonster-colombia.salchimonster.com/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/api.socket.salchimonster-colombia.salchimonster.com/privkey.pem;
+    include /etc/nginx/conf.d/ssl_params.conf;
+
+    location / {
+        proxy_pass http://api_socket:80;
+        include /etc/nginx/proxy_params.conf;
+    }
+}

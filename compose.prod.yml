@@ -1,0 +1,43 @@
+version: '3.9'
+services:
+  api_socket:
+    build: { context: ./backend/socket, target: prod }
+    container_name: salchimonster_colombia_api_socket
+    env_file: ./backend/socket/.env
+    command: ["gunicorn","-k","uvicorn.workers.UvicornWorker","-w","1","-t","1","-b","0.0.0.0:80","main:app"]
+    restart: unless-stopped
+
+  front_es:
+    build: { context: ./frontend/es, target: prod }
+    container_name: salchimonster_colombia_front_es
+    env_file: ./frontend/es/.env_prod
+    restart: unless-stopped
+
+  front_main:
+    build: { context: ./frontend/main, target: prod }
+    container_name: salchimonster_colombia_front_main
+    env_file: ./frontend/main/.env_prod
+    restart: unless-stopped
+
+  proxy:
+    build: { context: ./nginx }
+    container_name: salchimonster_colombia_proxy
+    ports: [ '80:80', '443:443' ]
+    volumes:
+      - ./nginx/conf.d:/etc/nginx/conf.d:rw
+      - ./nginx/proxy_params.conf:/etc/nginx/proxy_params.conf:ro
+      - ./nginx/certbot/www:/var/www/certbot:ro
+      - ./nginx/letsencrypt:/etc/letsencrypt:ro
+    depends_on: [api_socket, front_es, front_main]
+    restart: unless-stopped
+
+  certbot:
+    image: certbot/certbot:latest
+    container_name: salchimonster_colombia_certbot
+    volumes:
+      - ./nginx/certbot/www:/var/www/certbot
+      - ./nginx/letsencrypt:/etc/letsencrypt
+    depends_on: [proxy]
+    entrypoint: sh
+    command: -c "if [ -n 'api.socket.salchimonster-colombia.salchimonster.com es.salchimonster.com main.salchimonster.com www.es.salchimonster.com www.main.salchimonster.com' ]; then for d in api.socket.salchimonster-colombia.salchimonster.com es.salchimonster.com main.salchimonster.com www.es.salchimonster.com www.main.salchimonster.com; do certbot certonly -n --keep-until-expiring --webroot -w /var/www/certbot -d $$d --email \"arrechea.saa.a@gmail.com\" --agree-tos --no-eff-email ; done; fi; trap exit TERM; while :; do certbot renew -n --webroot -w /var/www/certbot --quiet || true; sleep 12h; done"
+    restart: unless-stopped

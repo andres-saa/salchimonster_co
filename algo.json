@@ -1,0 +1,995 @@
+[
+  {
+    "site_id": 11,
+    "order_types": [
+      {
+        "id": 6,
+        "name": "Estoy Aquí",
+        "methods": [
+          {
+            "id": 8,
+            "name": "EFECTIVO",
+            "exist": true,
+            "description": null,
+            "pay_message": "Pagas tu pedido al recibirlo",
+            "english_name": "EFECTY"
+          }
+        ],
+        "english_name": "Delivery"
+      },
+      {
+        "id": 3,
+        "name": "Domicilio",
+        "methods": [
+          {
+            "id": 8,
+            "name": "EFECTIVO",
+            "exist": true,
+            "description": null,
+            "pay_message": "Pagas tu pedido al recibirlo",
+            "english_name": "EFECTY"
+          },
+          {
+            "id": 5,
+            "name": "DATAFONO (TE LO ENVIAMOS A CASA)",
+            "exist": true,
+            "description": "En este metodo de pago el domiciliario lleva el datafono a la casa del clietne y este hace el pago cuando recibe el pedido",
+            "pay_message": "El domiciliario llevara el datafono a su casa para relizar el pago",
+            "english_name": "DATAFONO"
+          },
+          {
+            "id": 9,
+            "name": "TRANSFERENCIA / TARJETA",
+            "exist": true,
+            "description": "Se le envia un link de pago al cliente un link de pago para que este haga su pago de manera autonoma en nuestra pasarela de pagos",
+            "pay_message": "Debes realizar el pago atravez de nuestra pasarela de pagos",
+            "english_name": "CREDIT CARD / TRANSFER"
+          }
+        ],
+        "english_name": "Delivery"
+      },
+      {
+        "id": 2,
+        "name": "Recoger",
+        "methods": [
+          {
+            "id": 8,
+            "name": "EFECTIVO",
+            "exist": true,
+            "description": null,
+            "pay_message": "Pagas tu pedido al recibirlo",
+            "english_name": "EFECTY"
+          },
+          {
+            "id": 5,
+            "name": "DATAFONO (TE LO ENVIAMOS A CASA)",
+            "exist": true,
+            "description": "En este metodo de pago el domiciliario lleva el datafono a la casa del clietne y este hace el pago cuando recibe el pedido",
+            "pay_message": "El domiciliario llevara el datafono a su casa para relizar el pago",
+            "english_name": "DATAFONO"
+          }
+        ],
+        "english_name": "Pickup"
+      }
+    ]
+  },
+  {
+    "site_id": 38,
+    "order_types": [
+      {
+        "id": 3,
+        "name": "Domicilio",
+        "methods": [],
+        "english_name": "Delivery"
+      },
+      {
+        "id": 2,
+        "name": "Recoger",
+        "methods": [
+          {
+            "id": 8,
+            "name": "EFECTIVO",
+            "exist": true,
+            "description": null,
+            "pay_message": "Pagas tu pedido al recibirlo",
+            "english_name": "EFECTY"
+          },
+          {
+            "id": 5,
+            "name": "DATAFONO (TE LO ENVIAMOS A CASA)",
+            "exist": true,
+            "description": "En este metodo de pago el domiciliario lleva el datafono a la casa del clietne y este hace el pago cuando recibe el pedido",
+            "pay_message": "El domiciliario llevara el datafono a su casa para relizar el pago",
+            "english_name": "DATAFONO"
+          },
+          {
+            "id": 6,
+            "name": "TRANSFERENCIA",
+            "exist": true,
+            "description": "Un acesor contacta al cliente y le pide que transfiera el dinero a la cuenta de la empresa y con eso se envia el pedido a cocina",
+            "pay_message": "Uno de nuestros asesores lo contactara' en breve para validar su transferencia",
+            "english_name": "TRANSFER"
+          }
+        ],
+        "english_name": "Pickup"
+      },
+      {
+        "id": 6,
+        "name": "Estoy Aquí",
+        "methods": [],
+        "english_name": "in place"
+      }
+    ]
+  },
+  {
+    "site_id": 29,
+    "order_types": [
+      {
+        "id": 6,
+        "name": "Estoy Aquí",
+        "methods": [
+          {
+            "id": 8,
+            "name": "EFECTIVO",
+            "exist": true,
+            "description": null,
+            "pay_message": "Pagas tu pedido al recibirlo",
+            "english_name": "EFECTY"
+          }
+        ],
+        "english_name": "Delivery"
+      },
+      {
+        "id": 3,
+        "name": "Domicilio",
+        "methods": [
+          {
+            "id": 9,
+            "name": "TRANSFERENCIA / TARJETA",
+            "exist": true,
+            "description": "Se le envia un link de pago al cliente un link de pago para que este haga su pago de manera autonoma en nuestra pasarela de pagos",
+            "pay_message": "Debes realizar el pago atravez de nuestra pasarela de pagos",
+            "english_name": "CREDIT CARD / TRANSFER"
+          }
+        ],
+        "english_name": "Delivery"
+      },
+      {
+        "id": 2,
+        "name": "Recoger",
+        "methods": [
+          {
+            "id": 8,
+            "name": "EFECTIVO",
+            "exist": true,
+            "description": null,
+            "pay_message": "Pagas tu pedido al recibirlo",
+            "english_name": "EFECTY"
+          },
+          {
+            "id": 5,
+            "name": "DATAFONO (TE LO ENVIAMOS A CASA)",
+            "exist": true,
+            "description": "En este metodo de pago el domiciliario lleva el datafono a la casa del clietne y este hace el pago cuando recibe el pedido",
+            "pay_message": "El domiciliario llevara el datafono a su casa para relizar el pago",
+            "english_name": "DATAFONO"
+          }
+        ],
+        "english_name": "Pickup"
+      }
+    ]
+  },
+  {
+    "site_id": 32,
+    "order_types": [
+      {
+        "id": 6,
+        "name": "Estoy Aquí",
+        "methods": [],
+        "english_name": "Delivery"
+      },
+      {
+        "id": 3,
+        "name": "Domicilio",
+        "methods": [
+          {
+            "id": 9,
+            "name": "TRANSFERENCIA / TARJETA",
+            "exist": true,
+            "description": "Se le envia un link de pago al cliente un link de pago para que este haga su pago de manera autonoma en nuestra pasarela de pagos",
+            "pay_message": "Debes realizar el pago atravez de nuestra pasarela de pagos",
+            "english_name": "CREDIT CARD / TRANSFER"
+          }
+        ],
+        "english_name": "Delivery"
+      },
+      {
+        "id": 2,
+        "name": "Recoger",
+        "methods": [
+          {
+            "id": 8,
+            "name": "EFECTIVO",
+            "exist": true,
+            "description": null,
+            "pay_message": "Pagas tu pedido al recibirlo",
+            "english_name": "EFECTY"
+          },
+          {
+            "id": 5,
+            "name": "DATAFONO (TE LO ENVIAMOS A CASA)",
+            "exist": true,
+            "description": "En este metodo de pago el domiciliario lleva el datafono a la casa del clietne y este hace el pago cuando recibe el pedido",
+            "pay_message": "El domiciliario llevara el datafono a su casa para relizar el pago",
+            "english_name": "DATAFONO"
+          },
+          {
+            "id": 9,
+            "name": "TRANSFERENCIA / TARJETA",
+            "exist": true,
+            "description": "Se le envia un link de pago al cliente un link de pago para que este haga su pago de manera autonoma en nuestra pasarela de pagos",
+            "pay_message": "Debes realizar el pago atravez de nuestra pasarela de pagos",
+            "english_name": "CREDIT CARD / TRANSFER"
+          }
+        ],
+        "english_name": "Pickup"
+      }
+    ]
+  },
+  {
+    "site_id": 4,
+    "order_types": [
+      {
+        "id": 6,
+        "name": "Estoy Aquí",
+        "methods": [],
+        "english_name": "Delivery"
+      },
+      {
+        "id": 3,
+        "name": "Domicilio",
+        "methods": [
+          {
+            "id": 8,
+            "name": "EFECTIVO",
+            "exist": true,
+            "description": null,
+            "pay_message": "Pagas tu pedido al recibirlo",
+            "english_name": "EFECTY"
+          },
+          {
+            "id": 5,
+            "name": "DATAFONO (TE LO ENVIAMOS A CASA)",
+            "exist": true,
+            "description": "En este metodo de pago el domiciliario lleva el datafono a la casa del clietne y este hace el pago cuando recibe el pedido",
+            "pay_message": "El domiciliario llevara el datafono a su casa para relizar el pago",
+            "english_name": "DATAFONO"
+          },
+          {
+            "id": 9,
+            "name": "TRANSFERENCIA / TARJETA",
+            "exist": true,
+            "description": "Se le envia un link de pago al cliente un link de pago para que este haga su pago de manera autonoma en nuestra pasarela de pagos",
+            "pay_message": "Debes realizar el pago atravez de nuestra pasarela de pagos",
+            "english_name": "CREDIT CARD / TRANSFER"
+          }
+        ],
+        "english_name": "Delivery"
+      },
+      {
+        "id": 2,
+        "name": "Recoger",
+        "methods": [
+          {
+            "id": 8,
+            "name": "EFECTIVO",
+            "exist": true,
+            "description": null,
+            "pay_message": "Pagas tu pedido al recibirlo",
+            "english_name": "EFECTY"
+          },
+          {
+            "id": 5,
+            "name": "DATAFONO (TE LO ENVIAMOS A CASA)",
+            "exist": true,
+            "description": "En este metodo de pago el domiciliario lleva el datafono a la casa del clietne y este hace el pago cuando recibe el pedido",
+            "pay_message": "El domiciliario llevara el datafono a su casa para relizar el pago",
+            "english_name": "DATAFONO"
+          }
+        ],
+        "english_name": "Pickup"
+      }
+    ]
+  },
+  {
+    "site_id": 1,
+    "order_types": [
+      {
+        "id": 6,
+        "name": "Estoy Aquí",
+        "methods": [],
+        "english_name": "Delivery"
+      },
+      {
+        "id": 3,
+        "name": "Domicilio",
+        "methods": [
+          {
+            "id": 8,
+            "name": "EFECTIVO",
+            "exist": true,
+            "description": null,
+            "pay_message": "Pagas tu pedido al recibirlo",
+            "english_name": "EFECTY"
+          },
+          {
+            "id": 5,
+            "name": "DATAFONO (TE LO ENVIAMOS A CASA)",
+            "exist": true,
+            "description": "En este metodo de pago el domiciliario lleva el datafono a la casa del clietne y este hace el pago cuando recibe el pedido",
+            "pay_message": "El domiciliario llevara el datafono a su casa para relizar el pago",
+            "english_name": "DATAFONO"
+          },
+          {
+            "id": 9,
+            "name": "TRANSFERENCIA / TARJETA",
+            "exist": true,
+            "description": "Se le envia un link de pago al cliente un link de pago para que este haga su pago de manera autonoma en nuestra pasarela de pagos",
+            "pay_message": "Debes realizar el pago atravez de nuestra pasarela de pagos",
+            "english_name": "CREDIT CARD / TRANSFER"
+          }
+        ],
+        "english_name": "Delivery"
+      },
+      {
+        "id": 2,
+        "name": "Recoger",
+        "methods": [
+          {
+            "id": 8,
+            "name": "EFECTIVO",
+            "exist": true,
+            "description": null,
+            "pay_message": "Pagas tu pedido al recibirlo",
+            "english_name": "EFECTY"
+          },
+          {
+            "id": 5,
+            "name": "DATAFONO (TE LO ENVIAMOS A CASA)",
+            "exist": true,
+            "description": "En este metodo de pago el domiciliario lleva el datafono a la casa del clietne y este hace el pago cuando recibe el pedido",
+            "pay_message": "El domiciliario llevara el datafono a su casa para relizar el pago",
+            "english_name": "DATAFONO"
+          },
+          {
+            "id": 9,
+            "name": "TRANSFERENCIA / TARJETA",
+            "exist": true,
+            "description": "Se le envia un link de pago al cliente un link de pago para que este haga su pago de manera autonoma en nuestra pasarela de pagos",
+            "pay_message": "Debes realizar el pago atravez de nuestra pasarela de pagos",
+            "english_name": "CREDIT CARD / TRANSFER"
+          }
+        ],
+        "english_name": "Pickup"
+      }
+    ]
+  },
+  {
+    "site_id": 9,
+    "order_types": [
+      {
+        "id": 6,
+        "name": "Estoy Aquí",
+        "methods": [],
+        "english_name": "Delivery"
+      },
+      {
+        "id": 3,
+        "name": "Domicilio",
+        "methods": [
+          {
+            "id": 8,
+            "name": "EFECTIVO",
+            "exist": true,
+            "description": null,
+            "pay_message": "Pagas tu pedido al recibirlo",
+            "english_name": "EFECTY"
+          },
+          {
+            "id": 5,
+            "name": "DATAFONO (TE LO ENVIAMOS A CASA)",
+            "exist": true,
+            "description": "En este metodo de pago el domiciliario lleva el datafono a la casa del clietne y este hace el pago cuando recibe el pedido",
+            "pay_message": "El domiciliario llevara el datafono a su casa para relizar el pago",
+            "english_name": "DATAFONO"
+          },
+          {
+            "id": 9,
+            "name": "TRANSFERENCIA / TARJETA",
+            "exist": true,
+            "description": "Se le envia un link de pago al cliente un link de pago para que este haga su pago de manera autonoma en nuestra pasarela de pagos",
+            "pay_message": "Debes realizar el pago atravez de nuestra pasarela de pagos",
+            "english_name": "CREDIT CARD / TRANSFER"
+          }
+        ],
+        "english_name": "Delivery"
+      },
+      {
+        "id": 2,
+        "name": "Recoger",
+        "methods": [
+          {
+            "id": 8,
+            "name": "EFECTIVO",
+            "exist": true,
+            "description": null,
+            "pay_message": "Pagas tu pedido al recibirlo",
+            "english_name": "EFECTY"
+          },
+          {
+            "id": 5,
+            "name": "DATAFONO (TE LO ENVIAMOS A CASA)",
+            "exist": true,
+            "description": "En este metodo de pago el domiciliario lleva el datafono a la casa del clietne y este hace el pago cuando recibe el pedido",
+            "pay_message": "El domiciliario llevara el datafono a su casa para relizar el pago",
+            "english_name": "DATAFONO"
+          }
+        ],
+        "english_name": "Pickup"
+      }
+    ]
+  },
+  {
+    "site_id": 2,
+    "order_types": [
+      {
+        "id": 6,
+        "name": "Estoy Aquí",
+        "methods": [],
+        "english_name": "Delivery"
+      },
+      {
+        "id": 3,
+        "name": "Domicilio",
+        "methods": [
+          {
+            "id": 8,
+            "name": "EFECTIVO",
+            "exist": true,
+            "description": null,
+            "pay_message": "Pagas tu pedido al recibirlo",
+            "english_name": "EFECTY"
+          },
+          {
+            "id": 5,
+            "name": "DATAFONO (TE LO ENVIAMOS A CASA)",
+            "exist": true,
+            "description": "En este metodo de pago el domiciliario lleva el datafono a la casa del clietne y este hace el pago cuando recibe el pedido",
+            "pay_message": "El domiciliario llevara el datafono a su casa para relizar el pago",
+            "english_name": "DATAFONO"
+          },
+          {
+            "id": 9,
+            "name": "TRANSFERENCIA / TARJETA",
+            "exist": true,
+            "description": "Se le envia un link de pago al cliente un link de pago para que este haga su pago de manera autonoma en nuestra pasarela de pagos",
+            "pay_message": "Debes realizar el pago atravez de nuestra pasarela de pagos",
+            "english_name": "CREDIT CARD / TRANSFER"
+          }
+        ],
+        "english_name": "Delivery"
+      },
+      {
+        "id": 2,
+        "name": "Recoger",
+        "methods": [
+          {
+            "id": 8,
+            "name": "EFECTIVO",
+            "exist": true,
+            "description": null,
+            "pay_message": "Pagas tu pedido al recibirlo",
+            "english_name": "EFECTY"
+          },
+          {
+            "id": 5,
+            "name": "DATAFONO (TE LO ENVIAMOS A CASA)",
+            "exist": true,
+            "description": "En este metodo de pago el domiciliario lleva el datafono a la casa del clietne y este hace el pago cuando recibe el pedido",
+            "pay_message": "El domiciliario llevara el datafono a su casa para relizar el pago",
+            "english_name": "DATAFONO"
+          }
+        ],
+        "english_name": "Pickup"
+      }
+    ]
+  },
+  {
+    "site_id": 8,
+    "order_types": [
+      {
+        "id": 6,
+        "name": "Estoy Aquí",
+        "methods": [],
+        "english_name": "Delivery"
+      },
+      {
+        "id": 3,
+        "name": "Domicilio",
+        "methods": [
+          {
+            "id": 9,
+            "name": "TRANSFERENCIA / TARJETA",
+            "exist": true,
+            "description": "Se le envia un link de pago al cliente un link de pago para que este haga su pago de manera autonoma en nuestra pasarela de pagos",
+            "pay_message": "Debes realizar el pago atravez de nuestra pasarela de pagos",
+            "english_name": "CREDIT CARD / TRANSFER"
+          }
+        ],
+        "english_name": "Delivery"
+      },
+      {
+        "id": 2,
+        "name": "Recoger",
+        "methods": [
+          {
+            "id": 9,
+            "name": "TRANSFERENCIA / TARJETA",
+            "exist": true,
+            "description": "Se le envia un link de pago al cliente un link de pago para que este haga su pago de manera autonoma en nuestra pasarela de pagos",
+            "pay_message": "Debes realizar el pago atravez de nuestra pasarela de pagos",
+            "english_name": "CREDIT CARD / TRANSFER"
+          }
+        ],
+        "english_name": "Pickup"
+      }
+    ]
+  },
+  {
+    "site_id": 35,
+    "order_types": [
+      {
+        "id": 6,
+        "name": "Estoy Aquí",
+        "methods": [],
+        "english_name": "Delivery"
+      },
+      {
+        "id": 3,
+        "name": "Domicilio",
+        "methods": [
+          {
+            "id": 6,
+            "name": "TRANSFERENCIA",
+            "exist": true,
+            "description": "Un acesor contacta al cliente y le pide que transfiera el dinero a la cuenta de la empresa y con eso se envia el pedido a cocina",
+            "pay_message": "Uno de nuestros asesores lo contactara' en breve para validar su transferencia",
+            "english_name": "TRANSFER"
+          }
+        ],
+        "english_name": "Delivery"
+      },
+      {
+        "id": 2,
+        "name": "Recoger",
+        "methods": [
+          {
+            "id": 8,
+            "name": "EFECTIVO",
+            "exist": true,
+            "description": null,
+            "pay_message": "Pagas tu pedido al recibirlo",
+            "english_name": "EFECTY"
+          },
+          {
+            "id": 6,
+            "name": "TRANSFERENCIA",
+            "exist": true,
+            "description": "Un acesor contacta al cliente y le pide que transfiera el dinero a la cuenta de la empresa y con eso se envia el pedido a cocina",
+            "pay_message": "Uno de nuestros asesores lo contactara' en breve para validar su transferencia",
+            "english_name": "TRANSFER"
+          },
+          {
+            "id": 9,
+            "name": "TRANSFERENCIA / TARJETA",
+            "exist": true,
+            "description": "Se le envia un link de pago al cliente un link de pago para que este haga su pago de manera autonoma en nuestra pasarela de pagos",
+            "pay_message": "Debes realizar el pago atravez de nuestra pasarela de pagos",
+            "english_name": "CREDIT CARD / TRANSFER"
+          }
+        ],
+        "english_name": "Pickup"
+      }
+    ]
+  },
+  {
+    "site_id": 36,
+    "order_types": [
+      {
+        "id": 6,
+        "name": "Estoy Aquí",
+        "methods": [],
+        "english_name": "Delivery"
+      },
+      {
+        "id": 3,
+        "name": "Domicilio",
+        "methods": [
+          {
+            "id": 6,
+            "name": "TRANSFERENCIA",
+            "exist": true,
+            "description": "Un acesor contacta al cliente y le pide que transfiera el dinero a la cuenta de la empresa y con eso se envia el pedido a cocina",
+            "pay_message": "Uno de nuestros asesores lo contactara' en breve para validar su transferencia",
+            "english_name": "TRANSFER"
+          }
+        ],
+        "english_name": "Delivery"
+      },
+      {
+        "id": 2,
+        "name": "Recoger",
+        "methods": [],
+        "english_name": "Pickup"
+      }
+    ]
+  },
+  {
+    "site_id": 30,
+    "order_types": [
+      {
+        "id": 6,
+        "name": "Estoy Aquí",
+        "methods": [],
+        "english_name": "Delivery"
+      },
+      {
+        "id": 3,
+        "name": "Domicilio",
+        "methods": [
+          {
+            "id": 9,
+            "name": "TRANSFERENCIA / TARJETA",
+            "exist": true,
+            "description": "Se le envia un link de pago al cliente un link de pago para que este haga su pago de manera autonoma en nuestra pasarela de pagos",
+            "pay_message": "Debes realizar el pago atravez de nuestra pasarela de pagos",
+            "english_name": "CREDIT CARD / TRANSFER"
+          }
+        ],
+        "english_name": "Delivery"
+      },
+      {
+        "id": 2,
+        "name": "Recoger",
+        "methods": [
+          {
+            "id": 9,
+            "name": "TRANSFERENCIA / TARJETA",
+            "exist": true,
+            "description": "Se le envia un link de pago al cliente un link de pago para que este haga su pago de manera autonoma en nuestra pasarela de pagos",
+            "pay_message": "Debes realizar el pago atravez de nuestra pasarela de pagos",
+            "english_name": "CREDIT CARD / TRANSFER"
+          }
+        ],
+        "english_name": "Pickup"
+      }
+    ]
+  },
+  {
+    "site_id": 37,
+    "order_types": [
+      {
+        "id": 3,
+        "name": "Domicilio",
+        "methods": [
+          {
+            "id": 6,
+            "name": "TRANSFERENCIA",
+            "exist": true,
+            "description": "Un acesor contacta al cliente y le pide que transfiera el dinero a la cuenta de la empresa y con eso se envia el pedido a cocina",
+            "pay_message": "Uno de nuestros asesores lo contactara' en breve para validar su transferencia",
+            "english_name": "TRANSFER"
+          },
+          {
+            "id": 9,
+            "name": "TRANSFERENCIA / TARJETA",
+            "exist": true,
+            "description": "Se le envia un link de pago al cliente un link de pago para que este haga su pago de manera autonoma en nuestra pasarela de pagos",
+            "pay_message": "Debes realizar el pago atravez de nuestra pasarela de pagos",
+            "english_name": "CREDIT CARD / TRANSFER"
+          }
+        ],
+        "english_name": "Delivery"
+      },
+      {
+        "id": 6,
+        "name": "Estoy Aquí",
+        "methods": [],
+        "english_name": "Delivery"
+      },
+      {
+        "id": 2,
+        "name": "Recoger",
+        "methods": [
+          {
+            "id": 8,
+            "name": "EFECTIVO",
+            "exist": true,
+            "description": null,
+            "pay_message": "Pagas tu pedido al recibirlo",
+            "english_name": "EFECTY"
+          },
+          {
+            "id": 6,
+            "name": "TRANSFERENCIA",
+            "exist": true,
+            "description": "Un acesor contacta al cliente y le pide que transfiera el dinero a la cuenta de la empresa y con eso se envia el pedido a cocina",
+            "pay_message": "Uno de nuestros asesores lo contactara' en breve para validar su transferencia",
+            "english_name": "TRANSFER"
+          },
+          {
+            "id": 9,
+            "name": "TRANSFERENCIA / TARJETA",
+            "exist": true,
+            "description": "Se le envia un link de pago al cliente un link de pago para que este haga su pago de manera autonoma en nuestra pasarela de pagos",
+            "pay_message": "Debes realizar el pago atravez de nuestra pasarela de pagos",
+            "english_name": "CREDIT CARD / TRANSFER"
+          }
+        ],
+        "english_name": "Pickup"
+      }
+    ]
+  },
+  {
+    "site_id": 7,
+    "order_types": [
+      {
+        "id": 6,
+        "name": "Estoy Aquí",
+        "methods": [],
+        "english_name": "Delivery"
+      },
+      {
+        "id": 3,
+        "name": "Domicilio",
+        "methods": [
+          {
+            "id": 8,
+            "name": "EFECTIVO",
+            "exist": true,
+            "description": null,
+            "pay_message": "Pagas tu pedido al recibirlo",
+            "english_name": "EFECTY"
+          },
+          {
+            "id": 5,
+            "name": "DATAFONO (TE LO ENVIAMOS A CASA)",
+            "exist": true,
+            "description": "En este metodo de pago el domiciliario lleva el datafono a la casa del clietne y este hace el pago cuando recibe el pedido",
+            "pay_message": "El domiciliario llevara el datafono a su casa para relizar el pago",
+            "english_name": "DATAFONO"
+          },
+          {
+            "id": 9,
+            "name": "TRANSFERENCIA / TARJETA",
+            "exist": true,
+            "description": "Se le envia un link de pago al cliente un link de pago para que este haga su pago de manera autonoma en nuestra pasarela de pagos",
+            "pay_message": "Debes realizar el pago atravez de nuestra pasarela de pagos",
+            "english_name": "CREDIT CARD / TRANSFER"
+          }
+        ],
+        "english_name": "Delivery"
+      },
+      {
+        "id": 2,
+        "name": "Recoger",
+        "methods": [
+          {
+            "id": 8,
+            "name": "EFECTIVO",
+            "exist": true,
+            "description": null,
+            "pay_message": "Pagas tu pedido al recibirlo",
+            "english_name": "EFECTY"
+          },
+          {
+            "id": 5,
+            "name": "DATAFONO (TE LO ENVIAMOS A CASA)",
+            "exist": true,
+            "description": "En este metodo de pago el domiciliario lleva el datafono a la casa del clietne y este hace el pago cuando recibe el pedido",
+            "pay_message": "El domiciliario llevara el datafono a su casa para relizar el pago",
+            "english_name": "DATAFONO"
+          }
+        ],
+        "english_name": "Pickup"
+      }
+    ]
+  },
+  {
+    "site_id": 33,
+    "order_types": [
+      {
+        "id": 6,
+        "name": "Estoy Aquí",
+        "methods": [],
+        "english_name": "Delivery"
+      },
+      {
+        "id": 3,
+        "name": "Domicilio",
+        "methods": [
+          {
+            "id": 6,
+            "name": "TRANSFERENCIA",
+            "exist": true,
+            "description": "Un acesor contacta al cliente y le pide que transfiera el dinero a la cuenta de la empresa y con eso se envia el pedido a cocina",
+            "pay_message": "Uno de nuestros asesores lo contactara' en breve para validar su transferencia",
+            "english_name": "TRANSFER"
+          }
+        ],
+        "english_name": "Delivery"
+      },
+      {
+        "id": 2,
+        "name": "Recoger",
+        "methods": [
+          {
+            "id": 8,
+            "name": "EFECTIVO",
+            "exist": true,
+            "description": null,
+            "pay_message": "Pagas tu pedido al recibirlo",
+            "english_name": "EFECTY"
+          },
+          {
+            "id": 6,
+            "name": "TRANSFERENCIA",
+            "exist": true,
+            "description": "Un acesor contacta al cliente y le pide que transfiera el dinero a la cuenta de la empresa y con eso se envia el pedido a cocina",
+            "pay_message": "Uno de nuestros asesores lo contactara' en breve para validar su transferencia",
+            "english_name": "TRANSFER"
+          },
+          {
+            "id": 9,
+            "name": "TRANSFERENCIA / TARJETA",
+            "exist": true,
+            "description": "Se le envia un link de pago al cliente un link de pago para que este haga su pago de manera autonoma en nuestra pasarela de pagos",
+            "pay_message": "Debes realizar el pago atravez de nuestra pasarela de pagos",
+            "english_name": "CREDIT CARD / TRANSFER"
+          }
+        ],
+        "english_name": "Pickup"
+      }
+    ]
+  },
+  {
+    "site_id": 10,
+    "order_types": [
+      {
+        "id": 6,
+        "name": "Estoy Aquí",
+        "methods": [],
+        "english_name": "Delivery"
+      },
+      {
+        "id": 3,
+        "name": "Domicilio",
+        "methods": [
+          {
+            "id": 8,
+            "name": "EFECTIVO",
+            "exist": true,
+            "description": null,
+            "pay_message": "Pagas tu pedido al recibirlo",
+            "english_name": "EFECTY"
+          },
+          {
+            "id": 5,
+            "name": "DATAFONO (TE LO ENVIAMOS A CASA)",
+            "exist": true,
+            "description": "En este metodo de pago el domiciliario lleva el datafono a la casa del clietne y este hace el pago cuando recibe el pedido",
+            "pay_message": "El domiciliario llevara el datafono a su casa para relizar el pago",
+            "english_name": "DATAFONO"
+          },
+          {
+            "id": 9,
+            "name": "TRANSFERENCIA / TARJETA",
+            "exist": true,
+            "description": "Se le envia un link de pago al cliente un link de pago para que este haga su pago de manera autonoma en nuestra pasarela de pagos",
+            "pay_message": "Debes realizar el pago atravez de nuestra pasarela de pagos",
+            "english_name": "CREDIT CARD / TRANSFER"
+          }
+        ],
+        "english_name": "Delivery"
+      },
+      {
+        "id": 2,
+        "name": "Recoger",
+        "methods": [
+          {
+            "id": 8,
+            "name": "EFECTIVO",
+            "exist": true,
+            "description": null,
+            "pay_message": "Pagas tu pedido al recibirlo",
+            "english_name": "EFECTY"
+          },
+          {
+            "id": 5,
+            "name": "DATAFONO (TE LO ENVIAMOS A CASA)",
+            "exist": true,
+            "description": "En este metodo de pago el domiciliario lleva el datafono a la casa del clietne y este hace el pago cuando recibe el pedido",
+            "pay_message": "El domiciliario llevara el datafono a su casa para relizar el pago",
+            "english_name": "DATAFONO"
+          }
+        ],
+        "english_name": "Pickup"
+      }
+    ]
+  },
+  {
+    "site_id": 3,
+    "order_types": [
+      {
+        "id": 6,
+        "name": "Estoy Aquí",
+        "methods": [],
+        "english_name": "Delivery"
+      },
+      {
+        "id": 3,
+        "name": "Domicilio",
+        "methods": [
+          {
+            "id": 8,
+            "name": "EFECTIVO",
+            "exist": true,
+            "description": null,
+            "pay_message": "Pagas tu pedido al recibirlo",
+            "english_name": "EFECTY"
+          },
+          {
+            "id": 5,
+            "name": "DATAFONO (TE LO ENVIAMOS A CASA)",
+            "exist": true,
+            "description": "En este metodo de pago el domiciliario lleva el datafono a la casa del clietne y este hace el pago cuando recibe el pedido",
+            "pay_message": "El domiciliario llevara el datafono a su casa para relizar el pago",
+            "english_name": "DATAFONO"
+          },
+          {
+            "id": 9,
+            "name": "TRANSFERENCIA / TARJETA",
+            "exist": true,
+            "description": "Se le envia un link de pago al cliente un link de pago para que este haga su pago de manera autonoma en nuestra pasarela de pagos",
+            "pay_message": "Debes realizar el pago atravez de nuestra pasarela de pagos",
+            "english_name": "CREDIT CARD / TRANSFER"
+          }
+        ],
+        "english_name": "Delivery"
+      },
+      {
+        "id": 2,
+        "name": "Recoger",
+        "methods": [
+          {
+            "id": 8,
+            "name": "EFECTIVO",
+            "exist": true,
+            "description": null,
+            "pay_message": "Pagas tu pedido al recibirlo",
+            "english_name": "EFECTY"
+          },
+          {
+            "id": 5,
+            "name": "DATAFONO (TE LO ENVIAMOS A CASA)",
+            "exist": true,
+            "description": "En este metodo de pago el domiciliario lleva el datafono a la casa del clietne y este hace el pago cuando recibe el pedido",
+            "pay_message": "El domiciliario llevara el datafono a su casa para relizar el pago",
+            "english_name": "DATAFONO"
+          }
+        ],
+        "english_name": "Pickup"
+      }
+    ]
+  }
+]

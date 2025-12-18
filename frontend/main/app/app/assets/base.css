@@ -1,0 +1,29 @@
+*{
+    margin: 0;
+    padding: 0;
+}
+
+:root {
+  --bg-page: #f1f5f9;           /* Gris muy claro de fondo general */
+  --bg-gradient-from: #f1f5f9;
+  --bg-gradient-to: #e2e8f0;
+
+  --surface-main: #ffffff;      /* Blanco puro para sidebar */
+  --surface-soft: #f8fafc;
+  --surface-card: #ffffff;
+
+  --border-subtle: #cbd5e1;     /* Gris medio para bordes */
+
+  --text-primary: #0f172a;      /* Azul oscuro casi negro para textos */
+  --text-muted: #475569;        /* Gris oscurecido */
+  --text-soft: #64748b;         /* Gris medio */
+
+  --accent: #ea580c;            /* Naranja un poco más fuerte para contraste en blanco */
+  --accent-soft: rgba(234, 88, 12, 0.12);
+  --accent-softer: rgba(234, 88, 12, 0.06);
+
+  --success: #16a34a;
+  --danger: #dc2626;
+
+  --shadow-soft: 0 10px 30px rgba(0, 0, 0, 0.08); /* Sombra suave */
+}
