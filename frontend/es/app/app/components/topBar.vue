@@ -1,7 +1,6 @@
 <script setup>
 import { ref, computed, onMounted, onBeforeUnmount, nextTick, watch } from 'vue'
-import { useSitesStore, useSidebarStore, useUserStore, texts } from '#imports'
-import { useUIStore } from '#imports'
+import { useSitesStore, useSidebarStore, useUserStore, useUIStore, texts } from '#imports'
 
 const uistore = useUIStore()
 const route = useRoute()
@@ -43,7 +42,6 @@ const isLangOpen = ref(false)
 
 // --- refs para menús / "Más" ---
 const menusContainerRef = ref(null)
-const menuItemRefs = ref([])
 const moreButtonRef = ref(null)
 
 const visibleMenus = ref([])
@@ -68,7 +66,7 @@ const isLoggedIn = computed(() => {
 })
 
 const isIframe = computed(() => {
-  return !!user.user.iframe
+  return user.user.iframe 
 })
 
 // Acción: Nuevo Pedido (Redirige al 3001)
@@ -79,25 +77,57 @@ const goToNewOrder = () => {
   window.location.href = `http://localhost:3001?token=${token}&inserted_by=${inserted_by}&iframe=${iframe}`
 }
 
-// Acción: Cerrar Sesión (Borra datos y redirige al 3001)
+// Acción: Cerrar Sesión
 const handleLogout = () => {
-  // 1. Borrar datos del store
   user.user.token = null
   user.user.inserted_by = null
-  
-  // 2. (Opcional) Si usas cookies o localStorage directo, bórralo aquí también:
-  // localStorage.removeItem('token')
-  
-  // 3. Redirigir
   window.location.href = 'http://localhost:3001'
 }
 
-// --- MENÚS DINÁMICOS POR ESTADO (LOGUEADO VS NO LOGUEADO) ---
+// --- LÓGICA DE PERFIL DE USUARIO Y JWT ---
+const isProfileOpen = ref(false)
+
+// Función segura para decodificar JWT
+const parseJwt = (token) => {
+  try {
+    const base64Url = token.split('.')[1]
+    const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/')
+    
+    // Decodificación compatible con caracteres especiales (utf-8)
+    const jsonPayload = decodeURIComponent(
+      window.atob(base64)
+        .split('')
+        .map((c) => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2))
+        .join('')
+    )
+    return JSON.parse(jsonPayload)
+  } catch (e) {
+    console.error('Error decodificando token:', e)
+    return null
+  }
+}
+
+// Datos computados del usuario desde el token
+const userInfo = computed(() => {
+  if (!user.user?.token || typeof window === 'undefined') return null
+  return parseJwt(user.user.token)
+})
+
+// URL de la foto con timestamp para evitar caché
+const userPhotoUrl = computed(() => {
+  if (!userInfo.value?.dni) return 'https://cdn.icon-icons.com/icons2/1378/PNG/512/avatardefault_92824.png'
+  return `https://backend.salchimonster.com/read-product-image/600/employer-${userInfo.value.dni}?timestamp=${new Date().getTime()}`
+})
+
+const toggleProfile = () => {
+  isProfileOpen.value = !isProfileOpen.value
+}
+
+// --- MENÚS DINÁMICOS ---
 const menusAll = computed(() => {
   const langKey = (user.lang?.name || 'es').toLowerCase()
   const t = texts[langKey]?.menus || {}
 
-  // 1. LISTA PARA USUARIOS NO LOGUEADOS (Visitantes)
   const menusPublicos = [
     { label: t.domicilios || 'Domicilios', to: '/' },
     { label: t.sedes || 'Sedes', to: `/sedes` },
@@ -108,14 +138,9 @@ const menusAll = computed(() => {
     { label: t.sonando || 'Sonando', to: `/sonando` }
   ]
 
-  // 2. LISTA PARA USUARIOS LOGUEADOS
   const menusLogueados = [
-    // Puedes repetir menús o poner nuevos específicos de usuario
     { label: 'Menu', to: '/' }, 
-    // { label: 'Mi Perfil', to: '/perfil' },
-    // { label: t.carta || 'Carta', to: `/carta` },
     { label: t.rastrear || 'Rastrear', to: `/rastrear` },
-    // { label: t.ayuda || 'Ayuda', to: `/pqr` }
   ]
 
   return isLoggedIn.value ? menusLogueados : menusPublicos
@@ -129,7 +154,6 @@ const defaultSocialLinks = [
   { name: 'tiktok', url: 'https://www.tiktok.com/@salchimonsterespana', icon: 'fa7-brands:tiktok' }
 ]
 
-// ✅ redes desde el status de la sede
 const socialLinks = computed(() => {
   const raw = siteStore.status?.networks || siteStore.current?.networks || siteStore.site?.networks
   if (!raw) return defaultSocialLinks
@@ -138,7 +162,6 @@ const socialLinks = computed(() => {
     const parsed = typeof raw === 'string' ? JSON.parse(raw) : raw
     return Array.isArray(parsed) ? parsed : defaultSocialLinks
   } catch (e) {
-    console.error('Error parseando networks:', e)
     return defaultSocialLinks
   }
 })
@@ -150,18 +173,12 @@ const toggleSidebar = (event) => {
   sidebarStore.toggle()
 }
 
-const selectLang = (lang) => {
-  user.lang = lang
-  isLangOpen.value = false
-}
-
 const handleResize = () => {
   if (typeof window !== 'undefined') {
     windowWidth.value = window.innerWidth
   }
 }
 
-// helper para saber cuántos menús mostrar
 const getVisibleCountForWidth = (width, totalMenus) => {
   const rule = menuVisibilityConfig.find((rule) => width <= rule.maxWidth) || menuVisibilityConfig[menuVisibilityConfig.length - 1]
   if (rule.visible === 'all') return totalMenus
@@ -173,7 +190,6 @@ const recalcMenus = () => {
   if (!windowWidth.value) {
     visibleMenus.value = allMenus; overflowMenus.value = []; isMoreOpen.value = false; return
   }
-  // Móvil
   if (windowWidth.value <= 900) {
     visibleMenus.value = allMenus; overflowMenus.value = []; isMoreOpen.value = false; return
   }
@@ -200,6 +216,7 @@ onBeforeUnmount(() => {
 
 watch([menusAll, windowWidth], () => { nextTick().then(() => recalcMenus()) }, { immediate: true })
 </script>
+
 <template>
   <div class="app-topbar-wrapper">
     
@@ -299,11 +316,43 @@ watch([menusAll, windowWidth], () => { nextTick().then(() => recalcMenus()) }, {
             <Icon name="mdi:magnify" class="action-icon" />
           </button>
 
+          <div v-if="isLoggedIn && userInfo" class="user-profile-wrapper">
+            <button class="profile-trigger" @click="toggleProfile">
+              <img :src="userPhotoUrl" alt="User" class="profile-avatar" />
+              <span class="profile-name">{{ userInfo.name }}</span>
+            </button>
+
+            <transition name="fade-slide">
+              <div v-if="isProfileOpen" class="profile-card">
+                <div class="card-header">
+                  <img :src="userPhotoUrl" alt="Profile" class="card-avatar-large" />
+                  <div class="card-info">
+                    <h4 class="card-name">{{ userInfo.name }}</h4>
+                    <span class="card-role">{{ userInfo.rol }}</span>
+                  </div>
+                </div>
+                <hr class="card-divider" />
+                <div class="card-details">
+                  <div class="detail-row">
+                    <Icon name="mdi:card-account-details-outline" class="detail-icon" />
+                    <span><strong>DNI:</strong> {{ userInfo.dni }}</span>
+                  </div>
+                  <div class="detail-row">
+                    <Icon name="mdi:store-marker-outline" class="detail-icon" />
+                    <span><strong>Sede:</strong> {{ userInfo.site_name }}</span>
+                  </div>
+                </div>
+              </div>
+            </transition>
+          </div>
+
+
+ 
           <button 
             v-if="isLoggedIn && !isIframe" 
             @click.prevent="handleLogout" 
             class="new" 
-            style="background-color: #333;"
+            style="background-color: #333; margin-left: 0.5rem;"
             type="button"
           >
             cerrar
@@ -378,7 +427,7 @@ watch([menusAll, windowWidth], () => { nextTick().then(() => recalcMenus()) }, {
   100% { transform: translateX(-50%); }
 }
 
-/* --- HEADER CONTAINER (Glassmorphism Profesional) --- */
+/* --- HEADER CONTAINER --- */
 .app-topbar-container {
   width: 100%;
   background-color: rgba(255, 255, 255, 0.85);
@@ -420,7 +469,6 @@ watch([menusAll, windowWidth], () => { nextTick().then(() => recalcMenus()) }, {
 .logo-img {
   width: 42px;
   height: 42px;
-
   object-fit: cover;
 }
 
@@ -521,7 +569,7 @@ watch([menusAll, windowWidth], () => { nextTick().then(() => recalcMenus()) }, {
 }
 .more-button:hover { background: #f9f9f9; border-color: #ccc; }
 
-/* --- DROPDOWNS (Compartido Lenguaje y Más) --- */
+/* --- DROPDOWNS --- */
 .dropdown-menu {
   position: absolute;
   top: calc(100% + 10px);
@@ -578,40 +626,156 @@ watch([menusAll, windowWidth], () => { nextTick().then(() => recalcMenus()) }, {
 }
 .social-icon { font-size: 1.2rem; }
 
-/* --- ACCIONES DERECHA (Lang + Mobile Menu) --- */
+/* --- ACCIONES DERECHA --- */
 .header-actions {
   display: flex;
   align-items: center;
   gap: 0.8rem;
 }
 
-/* Lang Switcher */
-.lang-switcher { position: relative; }
-.lang-trigger {
+/* --- PERFIL DE USUARIO (NUEVOS ESTILOS) --- */
+.user-profile-wrapper {
+  position: relative;
   display: flex;
   align-items: center;
-  gap: 0.4rem;
+}
+
+.profile-trigger {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
   background: transparent;
   border: 1px solid transparent;
-  padding: 0.4rem;
-  border-radius: 6px;
+  padding: 0.3rem 0.6rem 0.3rem 0.3rem;
+  border-radius: 2rem;
   cursor: pointer;
   transition: all 0.2s;
 }
-.lang-trigger:hover { background: #f5f5f5; }
-.lang-flag {
-  width: 20px;
-  height: 14px;
-  object-fit: cover;
-  border-radius: 2px;
+
+.profile-trigger:hover {
+  background-color: rgba(0,0,0,0.05);
+  border-color: #eee;
 }
-.lang-code { font-weight: 700; font-size: 0.85rem; text-transform: uppercase; color: #444; }
-.lang-chevron { font-size: 1.1rem; color: #888; transition: transform 0.2s; }
-.rotated { transform: rotate(180deg); }
+
+.profile-avatar {
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2px solid #fff;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+}
+
+.profile-name {
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: #444;
+  max-width: 140px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* OVERLAY CARD */
+.profile-card {
+  position: absolute;
+  top: calc(100% + 14px);
+  right: -20px;
+  width: 290px;
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+  padding: 1.5rem;
+  z-index: 300;
+  border: 1px solid #f0f0f0;
+}
+
+/* Flechita del overlay */
+.profile-card::before {
+  content: '';
+  position: absolute;
+  top: -6px;
+  right: 35px;
+  width: 12px;
+  height: 12px;
+  background: white;
+  transform: rotate(45deg);
+  border-top: 1px solid #f0f0f0;
+  border-left: 1px solid #f0f0f0;
+}
+
+.card-header {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 0.8rem;
+  margin-bottom: 1rem;
+}
+
+.card-avatar-large {
+  width: 90px;
+  height: 90px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 4px solid var(--primary-color, #d32f2f);
+  padding: 3px;
+  background: white;
+}
+
+.card-info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  align-items: center;
+}
+
+.card-name {
+  margin: 0;
+  font-size: 1.15rem;
+  font-weight: 800;
+  color: #333;
+}
+
+.card-role {
+  font-size: 0.75rem;
+  color: white;
+  background-color: var(--primary-color, #d32f2f);
+  padding: 0.3rem 0.8rem;
+  border-radius: 20px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.card-divider {
+  border: 0;
+  border-top: 1px solid #eee;
+  margin: 1rem 0;
+}
+
+.card-details {
+  display: flex;
+  flex-direction: column;
+  gap: 0.8rem;
+}
+
+.detail-row {
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+  font-size: 0.95rem;
+  color: #555;
+}
+
+.detail-icon {
+  font-size: 1.3rem;
+  color: #888;
+}
 
 /* Botón Hamburguesa */
 .burger-button {
-  display: none; /* Oculto en desktop si no hay overflow */
+  display: none; 
   background: transparent;
   border: none;
   cursor: pointer;
@@ -627,99 +791,66 @@ watch([menusAll, windowWidth], () => { nextTick().then(() => recalcMenus()) }, {
 .fade-slide-enter-active, .fade-slide-leave-active { transition: all 0.2s ease; }
 .fade-slide-enter-from, .fade-slide-leave-to { opacity: 0; transform: translateY(-10px); }
 
-/* --- RESPONSIVE / MOBILE OPTIMIZATIONS --- */
-
+/* --- RESPONSIVE --- */
 @media (min-width: 901px) {
-  .burger-visible { display: none; } /* En desktop, solo se muestra si hay overflow lógico */
+  .burger-visible { display: none; }
 }
 
 @media (max-width: 900px) {
-  /* Ocultar menú de escritorio */
   .menus { display: none; }
-
-  /* Mostrar botón hamburguesa siempre */
   .burger-button { display: inline-flex; justify-content: center; align-items: center; }
-
-  /* Ajustar altura y padding del header para que sea mas cómodo al tacto */
-  .header-inner {
-    padding: 0.5rem 1rem;
-    height: var(--nav-height-mobile);
-  }
-
-  /* Logo más grande y legible */
+  .header-inner { padding: 0.5rem 1rem; height: var(--nav-height-mobile); }
   .logo-img { width: 48px; height: 48px; }
   .site-name { font-size: 1.1rem; }
   .marker-icon { font-size: 1.3rem; }
-
-  /* Acciones más separadas */
   .header-actions { gap: 0.5rem; }
-
-  /* Dropdown de idioma alineado a la derecha en móvil */
-  .dropdown-menu { right: -10px; min-width: 140px; }
-  
-  /* Botón de idioma más grande para el dedo */
-  .lang-trigger { padding: 0.5rem; border: 1px solid #eee; }
-  
-  /* Botón de menú más grande */
   .header-icon { font-size: 2rem; color: var(--primary-color, #d32f2f); }
+  
+  /* Ajustes Profile Móvil */
+  .profile-name { display: none; } /* Ocultar nombre para ahorrar espacio */
+  .profile-trigger { padding: 0; }
+  .profile-card { right: -50px; width: 260px; }
+  .profile-card::before { right: 65px; }
 }
 
 @media (max-width: 400px) {
-  /* En pantallas muy pequeñas, ocultar el nombre si es necesario o ajustar */
   .site-name { font-size: 0.95rem; max-width: 120px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 }
 
-/* --- BOTONES DE ACCIÓN (Search, etc) --- */
+/* --- BOTONES DE ACCIÓN --- */
 .action-btn {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 40px;          /* Tamaño cómodo para click */
+  width: 40px;
   height: 40px;
-  border-radius: 50%;   /* Totalmente circular */
+  border-radius: 50%;
   background: transparent;
-  border: 1px solid transparent; /* Reserva espacio para borde si quisieras ponerlo en hover */
+  border: 1px solid transparent;
   cursor: pointer;
-  color: #555;          /* Gris neutro consistente con tus redes sociales */
+  color: #555;
   transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
   margin-right: 0.2rem;
 }
 
-/* Efecto Hover */
 .action-btn:hover {
-  background-color: rgba(0, 0, 0, 0.04); /* Fondo gris muy sutil */
-  color: var(--primary-color, #d32f2f);  /* Tu rojo corporativo */
-  transform: translateY(-1px);           /* Pequeña elevación */
+  background-color: rgba(0, 0, 0, 0.04);
+  color: var(--primary-color, #d32f2f);
+  transform: translateY(-1px);
   box-shadow: 0 2px 8px rgba(0,0,0,0.05);
 }
 
-/* Efecto al hacer Click */
 .action-btn:active {
-  transform: scale(0.95); /* Efecto de presión */
+  transform: scale(0.95);
   background-color: rgba(0, 0, 0, 0.08);
 }
 
-/* Tamaño del Icono */
-.action-icon {
-  font-size: 1.4rem; /* Tamaño equilibrado dentro del círculo de 40px */
-}
+.action-icon { font-size: 1.4rem; }
 
-/* --- AJUSTES MÓVILES --- */
 @media (max-width: 900px) {
-  .action-btn {
-    width: 44px;      /* Un poco más grande para facilitar el toque con el dedo */
-    height: 44px;
-    border: 1px solid #f0f0f0; /* Un borde sutil ayuda a definir el área táctil en móvil */
-  }
-  
-  .action-icon {
-    font-size: 1.5rem; /* Icono ligeramente más grande */
-  }
-  
-  /* En móvil, el botón de search suele verse mejor un poco separado del borde o del menú hamburguesa */
-  .search-btn {
-    margin-right: 0.5rem;
-  }
+  .action-btn { width: 44px; height: 44px; border: 1px solid #f0f0f0; }
+  .action-icon { font-size: 1.5rem; }
+  .search-btn { margin-right: 0.5rem; }
 }
 
 .new {

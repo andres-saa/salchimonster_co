@@ -494,7 +494,7 @@ useHead(() => ({
 .menu-content {
   max-width: 1300px;
   margin: 0rem auto 2.5rem;
-  padding: 0 1rem 1rem;
+  padding:   1rem;
 }
 
 /* SECCIÓN CATEGORÍA */
