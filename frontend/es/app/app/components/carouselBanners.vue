@@ -1,36 +1,27 @@
 <template>
-  <div class="banner-container">
-    <!-- Slider con las imágenes -->
+  <div class="banner-container" v-if="banners.length > 0">
     <div class="slider" :style="sliderStyle">
       <div
         v-for="(banner, idx) in banners"
         :key="banner.id ?? idx"
         class="slide"
+        :class="{ 'has-link': !!banner.link }"
+        @click="onBannerClick(banner)"
       >
         <img
           class="slide-image"
           :src="`${URI}/read-photo-product/${banner.img_identifier}`"
-          :alt="banner.title ?? `Banner ${idx}`"
+          :alt="`Banner Colombia ${idx + 1}`"
+          loading="lazy"
         />
-
-        <!-- Botón dentro del banner -->
-        <button
-          class="banner-cta"
-          type="button"
-          @click="onBannerButtonClick(banner)"
-        >
-          <span>Haz tu pedido</span>
-          <Icon name="mdi:cart-outline" class="banner-cta-icon" />
-        </button>
       </div>
     </div>
 
-    <!-- Botones de navegación (sólo si hay más de un banner) -->
     <button
       class="nav-btn nav-btn--left"
       v-if="banners.length > 1"
       type="button"
-      @click="prevBanner"
+      @click.stop="prevBanner"
     >
       <Icon name="mdi:chevron-left" class="nav-icon" />
     </button>
@@ -39,33 +30,52 @@
       class="nav-btn nav-btn--right"
       v-if="banners.length > 1"
       type="button"
-      @click="nextBanner"
+      @click.stop="nextBanner"
     >
       <Icon name="mdi:chevron-right" class="nav-icon" />
     </button>
+
+    <div class="indicators" v-if="banners.length > 1">
+      <span 
+        v-for="(_, idx) in banners" 
+        :key="idx"
+        class="dot"
+        :class="{ active: idx === currentIndex }"
+      ></span>
+    </div>
   </div>
 </template>
 
 <script setup>
 import { ref, computed, onMounted, onBeforeUnmount } from 'vue'
+import { useRouter } from 'vue-router'
 import { URI } from '@/service/conection'
 
-// useFetch de Nuxt para evitar llamadas infinitas
-const { data: bannersData } = await useFetch(`${URI}/banners`, {
-  key: 'home-banners',
-  default: () => [],
+const router = useRouter()
+const DB_ID = 'banners_master_v1'
+
+// 1. Fetch al JSON maestro
+const { data: dbData } = await useFetch(`${URI}/data/${DB_ID}`, {
+  key: 'home-banners-master',
+  // Evitamos cache agresivo para ver cambios recientes del gestor
+  headers: { 'Cache-Control': 'no-cache' } 
 })
 
+// 2. Extraemos SOLO los banners de Colombia ('co')
+const banners = computed(() => {
+  // La estructura del backend suele ser { data: { co: [], us: [], es: [] } }
+  const rawData = dbData.value?.data || {}
+  return rawData.co || []
+})
+
+// --- LÓGICA DEL SLIDER (Tu código original optimizado) ---
 const currentIndex = ref(0)
-const INTERVAL_TIME = 3000
-const PAUSE_AFTER_INTERACTION = 10000 // 10 segundos
+const INTERVAL_TIME = 4000
+const PAUSE_AFTER_INTERACTION = 8000
 
 let intervalId = null
 let resumeTimeoutId = null
 
-const banners = computed(() => bannersData.value || [])
-
-// 🆕 Controla si hay transición o no
 const isTransitionEnabled = ref(true)
 
 onMounted(() => {
@@ -107,59 +117,29 @@ function scheduleAutoplayResume() {
   }, PAUSE_AFTER_INTERACTION)
 }
 
-const isJumping = ref(false)
-const JUMP_ANIMATION_DURATION = 500 // ms, debe coincidir con el CSS
-
-
-function jumpWithoutTransition(newIndex, withAppear = true) {
-  isTransitionEnabled.value = false
-  currentIndex.value = newIndex
-
-  if (withAppear) {
-    isJumping.value = true
-    // Apaga la clase de animación después de que termine
-    setTimeout(() => {
-      isJumping.value = false
-    }, JUMP_ANIMATION_DURATION)
-  }
-
-  // Rehabilitamos la transición en el siguiente frame
-  requestAnimationFrame(() => {
-    isTransitionEnabled.value = true
-  })
-}
-
-// Lógica de cambio
 function goToNext() {
-  const total = banners.value.length
-  if (!total) return
-
-  if (currentIndex.value === total - 1) {
-    jumpWithoutTransition(0, true) // con animación al volver al primero
+  if (!banners.value.length) return
+  if (currentIndex.value === banners.value.length - 1) {
+    currentIndex.value = 0 
   } else {
-    currentIndex.value = currentIndex.value + 1
+    currentIndex.value++
   }
 }
-
 
 function goToPrev() {
-  const total = banners.value.length
-  if (!total) return
-
-  // 👉 aquí queremos animación de aparición en la última
+  if (!banners.value.length) return
   if (currentIndex.value === 0) {
-    jumpWithoutTransition(total - 1, true) // con animación
+    currentIndex.value = banners.value.length - 1
   } else {
-    currentIndex.value = currentIndex.value - 1
+    currentIndex.value--
   }
 }
 
-
-// Handlers de interacción manual (pausan 10s)
+// Handlers manuales
 function nextBanner() {
-  stopAutoplay()       // detenemos autoplay
-  goToNext()           // cambiamos de banner
-  scheduleAutoplayResume() // lo reanudamos en 10s
+  stopAutoplay()
+  goToNext()
+  scheduleAutoplayResume()
 }
 
 function prevBanner() {
@@ -168,42 +148,51 @@ function prevBanner() {
   scheduleAutoplayResume()
 }
 
+// 3. Manejo del Clic en la Imagen
+function onBannerClick(banner) {
+  if (!banner.link) return
+
+  // Pausar slider si el usuario interactúa
+  stopAutoplay()
+  scheduleAutoplayResume()
+
+  // Detectar si es link externo o interno
+  if (banner.link.startsWith('http')) {
+    window.open(banner.link, '_blank')
+  } else {
+    router.push(banner.link)
+  }
+}
+
 const sliderStyle = computed(() => {
   const translateX = -currentIndex.value * 100
   return {
     transform: `translateX(${translateX}%)`,
-    // 🆕 Sólo aplicamos transición cuando isTransitionEnabled es true
-    transition: isTransitionEnabled.value ? 'transform 1s ease' : 'none',
+    transition: isTransitionEnabled.value ? 'transform 0.6s cubic-bezier(0.25, 1, 0.5, 1)' : 'none',
   }
 })
-
-// Ajusta esta acción a tu flujo real (menu, promo, etc)
-function onBannerButtonClick(banner) {
-  console.log('Click en banner:', banner)
-  // Ejemplo:
-  // const router = useRouter()
-  // router.push('/menu')
-}
 </script>
 
 <style scoped>
 .banner-container {
-  background-color: var(--primary-color);
+  background-color: #f1f1f1; /* Fondo neutro mientras carga */
   overflow: hidden;
   display: flex;
   align-items: center;
   position: relative;
-  margin-top: 0;
-  padding: 0;
   width: 100%;
+  aspect-ratio: 16 / 9; /* Mantiene el espacio estable */
+  border-radius: 0px;   /* Opcional: bordes redondeados */
 }
 
 /* Slider */
 .slider {
   display: flex;
   width: 100%;
+  height: 100%;
   padding: 0;
   margin: 0;
+  will-change: transform; /* Optimización de rendimiento */
 }
 
 /* Slide */
@@ -211,57 +200,49 @@ function onBannerButtonClick(banner) {
   position: relative;
   width: 100%;
   min-width: 100%;
+  height: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.slide.has-link {
+  cursor: pointer;
 }
 
 /* Imagen */
 .slide-image {
   width: 100%;
-  min-width: 100%;
-  aspect-ratio: 16 / 9;
-  object-fit: cover;
   height: 100%;
-}
-
-/* Botón CTA del banner */
-.banner-cta {
-  position: absolute;
-  bottom: 1.5rem;
-  right: 1.5rem;
-  padding: 0.75rem 1.5rem;
-  border-radius: 999px;
-  border: none;
-  font-weight: 600;
-  font-size: 0.95rem;
-  background-color: #000000c0;
-  color: #ffffff;
-  cursor: pointer;
-  backdrop-filter: blur(4px);
-  display: inline-flex;
-  align-items: center;
-  gap: 0.5rem;
-}
-
-.banner-cta:hover {
-  background-color: #000000e0;
-}
-
-.banner-cta-icon {
-  font-size: 1.1rem;
+  object-fit: cover; /* Asegura que la imagen llene todo el espacio sin deformarse */
+  display: block;
 }
 
 /* Botones de navegación */
 .nav-btn {
   position: absolute;
-  aspect-ratio: 1 / 1;
+  width: 40px;
+  height: 40px;
   border-radius: 50%;
-  padding: 0.5rem;
-  background-color: #00000070;
+  background-color: rgba(0, 0, 0, 0.3);
   border: none;
   color: white;
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
+  transition: background-color 0.2s;
+  z-index: 2;
+  opacity: 0; /* Ocultos por defecto para limpieza */
+}
+
+/* Mostrar botones al hacer hover en el contenedor */
+.banner-container:hover .nav-btn {
+  opacity: 1;
+}
+
+.nav-btn:hover {
+  background-color: rgba(0, 0, 0, 0.7);
 }
 
 .nav-btn--left {
@@ -273,30 +254,47 @@ function onBannerButtonClick(banner) {
 }
 
 .nav-icon {
-  font-size: 1.8rem;
+  font-size: 2rem;
+}
+
+/* Indicadores (Puntos) */
+.indicators {
+  position: absolute;
+  bottom: 1rem;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 0.5rem;
+  z-index: 2;
+}
+
+.dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background-color: rgba(255, 255, 255, 0.5);
+  transition: all 0.3s;
+}
+
+.dot.active {
+  background-color: white;
+  transform: scale(1.2);
 }
 
 /* Mobile */
-@media (max-width: 600px) {
-  .slide-image {
-    aspect-ratio: 4 / 3;
+@media (max-width: 768px) {
+  .banner-container {
+    aspect-ratio: 4 / 3; /* Más cuadrado en móvil */
   }
-
-  .banner-cta {
-    bottom: 1rem;
-    right: 1rem;
-    padding: 0.6rem 1.2rem;
-    font-size: 0.85rem;
+  
+  .nav-btn {
+    opacity: 1; /* Siempre visibles en móvil */
+    width: 32px;
+    height: 32px;
   }
-}
-
-/* Ajustes nav buttons */
-@media (max-width: 1100px) {
-  .nav-btn--right {
-    right: 0.5rem;
-  }
-  .nav-btn--left {
-    left: 0.5rem;
+  
+  .nav-icon {
+    font-size: 1.5rem;
   }
 }
 </style>
