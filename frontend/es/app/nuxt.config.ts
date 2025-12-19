@@ -19,6 +19,11 @@ export default defineNuxtConfig({
     '@pinia/nuxt',
     'pinia-plugin-persistedstate/nuxt',
   ],
+  
+  sourcemap: {
+    server: false,
+    client: false
+  },
 
   css: ['~/assets/base.css'],
 
