@@ -1,17 +1,13 @@
+// nuxt.config.ts
 export default defineNuxtConfig({
   compatibilityDate: '2025-07-15',
   devtools: { enabled: true },
 
-  // 1. ELIMINA 'i18n-iso-countries' de aquí. Deja transpile vacío o con tus otras libs.
+  // Mantén el transpile, ayuda a que Nuxt procese la librería
   build: {
-    transpile: [] 
+    transpile: ['i18n-iso-countries']
   },
   
-  // 2. AGREGA este alias para asegurar que apunte al archivo principal correcto
-  alias: {
-    'i18n-iso-countries': 'i18n-iso-countries/index.js'
-  },
-
   modules: [
     '@nuxt/eslint',
     '@nuxt/image',
@@ -19,11 +15,6 @@ export default defineNuxtConfig({
     '@pinia/nuxt',
     'pinia-plugin-persistedstate/nuxt',
   ],
-  
-  sourcemap: {
-    server: false,
-    client: false
-  },
 
   css: ['~/assets/base.css'],
 
@@ -47,8 +38,22 @@ export default defineNuxtConfig({
     },
   },
 
-  // 3. BORRA el bloque 'vite' que te di antes (ignoreDynamicRequires...).
-  // El bloque 'image' se queda igual.
+  // 👇 AQUÍ ESTÁ LA SOLUCIÓN MÁGICA 👇
+  vite: {
+    build: {
+      commonjsOptions: {
+        // Esto le dice al bundler: "Si ves un require() raro dentro de una librería,
+        // ignóralo y no rompas el servidor".
+        ignoreDynamicRequires: true
+      }
+    },
+    // Opcional: Ayuda a Vite a pre-optimizar la dependencia
+    optimizeDeps: {
+      include: ['i18n-iso-countries']
+    }
+  },
+  // 👆 FIN DE LA SOLUCIÓN 👆
+
   image: {
     domains: [
       'img.restpe.com', 
