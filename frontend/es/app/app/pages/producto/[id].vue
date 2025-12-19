@@ -113,7 +113,7 @@
     </div>
 
     <div v-else class="product-container animate-fade-in">
-      <p style="padding: 2rem; text-align: center;">No encontramos este producto en esta sede.</p>
+      <p style="padding: 2rem; text-align: center;">Cargando...</p>
     </div>
 
     <footer class="sticky-footer" v-if="currentProduct">
@@ -141,7 +141,6 @@
           </button>
           <button class="add-cart-btn btn-primary" @click="processAddToCart('pay')">
             <div class="btn-content-pc">
-              
               <span class="btn-total-pc"> Ir a pagar {{ formatoPesosColombianos(calculateTotal()) }}</span>
             </div>
           </button>
@@ -206,14 +205,16 @@ const { showToast } = useToast()
 const sitesStore = useSitesStore()
 
 // --- ESTADOS Y STORES ---
+// Al recargar la página, sitesStore puede estar vacío en el servidor.
+// El valor por defecto (1) causaba el error al renderizar en servidor (SSR).
 const siteId = computed(() => (sitesStore?.location?.site?.site_id) || 1)
+
 const quantity = ref(1)
 const selectedAdditions = ref({})
 const checkedAddition = ref({})
 const exclusive = ref({})
 const productBaseToChange = ref(null)
 const showChangeDialog = ref(false)
-// Nuevo estado para el modal de decisión móvil
 const showPostActionModal = ref(false)
 
 // Estado de carga de imagen para transición
@@ -225,13 +226,20 @@ const checkImageState = () => { if (mainImageRef.value?.complete) imageLoaded.va
 
 onMounted(() => { checkImageState() })
 
-// --- DATA FETCHING ---
+// --- DATA FETCHING CORREGIDO ---
+// Se agregó "server: false" para que la petición solo ocurra en el cliente
+// asegurando que Pinia ya tenga el siteId correcto cargado del localStorage.
 const { data: rawCategoriesData, pending: loading } = useFetch(
   () => `${URI}/tiendas/${siteId.value}/products`,
-  { key: () => `menu-data-${siteId.value}` }
+  { 
+    key: () => `menu-data-${siteId.value}`,
+    server: false, // <--- ESTO SOLUCIONA EL ERROR AL RECARGAR
+    lazy: true     // <--- Opcional: mejora UX mostrando el loading mientras carga
+  }
 )
 
-// ... (CÓDIGO DE PRODUCTO, PRECIOS, IMÁGENES IGUAL QUE ANTES) ...
+// ... (Resto del código idéntico) ...
+
 const currentProductId = computed(() => Number(route.params.id))
 const flatProducts = computed(() => {
   const raw = rawCategoriesData.value
@@ -246,6 +254,7 @@ const flatProducts = computed(() => {
   })
   return list
 })
+
 const currentProduct = computed(() => flatProducts.value.find((p) => Number(p.producto_id) === currentProductId.value) || null)
 
 const basePrice = computed(() => {
@@ -276,7 +285,7 @@ const highResUrl = computed(() => {
   return '/placeholder.png'
 })
 
-// ... (LÓGICA DE GRUPOS, LIMITES, HANDLERS IGUAL QUE ANTES) ...
+// --- LÓGICA DE GRUPOS ---
 const groupLimits = computed(() => {
   const p = currentProduct.value
   if (!p || !Array.isArray(p.lista_agrupadores)) return {}
@@ -291,6 +300,7 @@ const groupLimits = computed(() => {
   })
   return limits
 })
+
 const getGroupRequirementText = (group) => {
   const limits = groupLimits.value[String(group.modificador_id)]
   if (!limits) return ''
@@ -298,11 +308,13 @@ const getGroupRequirementText = (group) => {
   if (limits.min > 0) return `Elige al menos ${limits.min}`
   return 'Opcional'
 }
+
 const isSelected = (mod, groupId) => !!selectedAdditions.value[mod.modificadorseleccion_id]
 const groupCount = (groupId) => {
   const idStr = String(groupId)
   return Object.values(selectedAdditions.value).reduce((acc, it) => String(it.modificador_id) === idStr ? acc + Number(it.modificadorseleccion_cantidad || 0) : acc, 0)
 }
+
 const calculateTotal = () => {
   let total = finalPrice.value * quantity.value
   Object.values(selectedAdditions.value).forEach((item) => {
@@ -310,6 +322,7 @@ const calculateTotal = () => {
   })
   return total
 }
+
 const handleRowClick = (mod, groupId) => {
   const limits = groupLimits.value[String(groupId)]
   if (!limits.multiple) {
@@ -320,16 +333,20 @@ const handleRowClick = (mod, groupId) => {
   checkedAddition.value[mod.modificadorseleccion_id] = !isChecked
   handleAdditionChange(mod, groupId)
 }
+
 const handleAdditionChange = (item, groupId) => {
   const key = String(groupId)
   const limits = groupLimits.value[key]
+  
   if (!limits.multiple) {
+    // Single select logic
     Object.keys(selectedAdditions.value).forEach((k) => {
       if (selectedAdditions.value[k].modificador_id === groupId) delete selectedAdditions.value[k]
     })
     exclusive.value[groupId] = item.modificadorseleccion_id
     selectedAdditions.value[item.modificadorseleccion_id] = { ...item, modificadorseleccion_cantidad: 1, modificador_id: groupId }
   } else {
+    // Multi select logic
     if (checkedAddition.value[item.modificadorseleccion_id]) {
       if (limits.max > 0 && groupCount(key) + 1 > limits.max) {
         checkedAddition.value[item.modificadorseleccion_id] = false
@@ -342,6 +359,7 @@ const handleAdditionChange = (item, groupId) => {
     }
   }
 }
+
 const increment = (item, groupId) => {
   const key = String(groupId)
   const limits = groupLimits.value[key]
@@ -351,6 +369,7 @@ const increment = (item, groupId) => {
   }
   selectedAdditions.value[item.modificadorseleccion_id].modificadorseleccion_cantidad++
 }
+
 const decrement = (item) => {
   const entry = selectedAdditions.value[item.modificadorseleccion_id]
   if (entry.modificadorseleccion_cantidad > 1) {
@@ -360,10 +379,12 @@ const decrement = (item) => {
     delete selectedAdditions.value[item.modificadorseleccion_id]
   }
 }
+
 const changeProductBase = (base) => {
   productBaseToChange.value = base
   showChangeDialog.value = true
 }
+
 const selectAlternative = (option) => {
   const current = productBaseToChange.value
   const backup = {
@@ -377,6 +398,7 @@ const selectAlternative = (option) => {
   const idx = list.findIndex((i) => i.producto_id === option.producto_id)
   if (idx !== -1) list.splice(idx, 1, backup)
   else list.push(backup)
+
   Object.assign(current, {
     producto_id: option.producto_id,
     producto_descripcion: option.producto_descripcion,
@@ -386,7 +408,7 @@ const selectAlternative = (option) => {
   showChangeDialog.value = false
 }
 
-// --- ADD TO CART & NAV MODIFICADO ---
+// --- ADD TO CART & NAV ---
 const validateMinMaximums = () => {
   for (const [gId, lim] of Object.entries(groupLimits.value)) {
     if (groupCount(gId) < lim.min) return false
@@ -394,10 +416,6 @@ const validateMinMaximums = () => {
   return true
 }
 
-/**
- * Procesa la adición al carrito y decide la navegación.
- * @param {string} mode - 'ask' (móvil, preguntar), 'pay' (ir a pagar), 'menu' (ir a inicio)
- */
 const processAddToCart = (mode) => {
   if (!currentProduct.value) return
   
@@ -406,24 +424,19 @@ const processAddToCart = (mode) => {
     return
   }
 
-  // 1. Agregar al Store
   store.addProductToCart(currentProduct.value, quantity.value, Object.values(selectedAdditions.value))
   
-  // 2. Lógica de redirección
   if (mode === 'ask') {
-    // En móvil no redirigimos aun, abrimos el modal
     showPostActionModal.value = true
   } else if (mode === 'pay') {
     showToast({ title: 'Agregado', message: 'Yendo a pagar...', severity: 'success' })
     router.push('/pay')
   } else {
-    // mode === 'menu'
     showToast({ title: 'Agregado', message: 'Producto agregado al carrito', severity: 'success' })
     router.push('/')
   }
 }
 
-// Función llamada desde el Modal Móvil para ejecutar la navegación final
 const completeMobileAction = (destination) => {
   showPostActionModal.value = false
   if (destination === 'pay') {
@@ -435,7 +448,6 @@ const completeMobileAction = (destination) => {
 
 const goBack = () => router.push('/')
 
-// ... (Resto de la navegación igual)
 const goToRelative = (step) => {
   const list = flatProducts.value
   const idx = list.findIndex((p) => Number(p.producto_id) === currentProductId.value)
@@ -453,6 +465,7 @@ watch(currentProduct, async (newVal) => {
     selectedAdditions.value = {}
     checkedAddition.value = {}
     exclusive.value = {}
+    
     newVal.lista_agrupadores?.forEach((g) => {
       const lim = groupLimits.value[String(g.modificador_id)]
       if (lim && lim.min > 0 && !lim.multiple && g.listaModificadores?.length > 0) {
@@ -468,7 +481,6 @@ useHead({ title: computed(() => currentProduct.value ? `${displayName.value} - M
 </script>
 
 <style scoped>
-/* ... (ESTILOS ANTERIORES SE MANTIENEN IGUAL) ... */
 .page-wrapper {
   min-height: 100vh;
   padding-bottom: 90px;
@@ -485,8 +497,10 @@ useHead({ title: computed(() => currentProduct.value ? `${displayName.value} - M
 .spinner-container { display: flex; flex-direction: column; align-items: center; gap: 15px; color: var(--primary, #dc2626); }
 .spin-icon { animation: spin 1s linear infinite; }
 @keyframes spin { 100% { transform: rotate(360deg); } }
+
 .animate-fade-in { animation: fadeIn 0.4s ease-out forwards; }
 @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
 .nav-btn {
   position: fixed; z-index: 50; background: white;
   border: 1px solid var(--border, #e5e7eb); box-shadow: 0 4px 6px rgba(0,0,0,0.05);
@@ -496,10 +510,12 @@ useHead({ title: computed(() => currentProduct.value ? `${displayName.value} - M
 }
 .nav-btn:hover { background: #f3f4f6; transform: scale(1.05); }
 .nav-btn--back { top: 4rem; left: 1rem; }
+
 .product-container { display: grid; grid-template-columns: 1fr; max-width: 1200px; margin: 0 auto; }
 @media (min-width: 1024px) {
   .product-container { grid-template-columns: 1fr 1fr; gap: 40px; padding: 40px; align-items: stretch; }
 }
+
 .gallery-column { width: 100%; position: relative; }
 .image-wrapper {
   position: relative; background: #f3f4f6; width: 100%; aspect-ratio: 1/1;
@@ -511,6 +527,7 @@ useHead({ title: computed(() => currentProduct.value ? `${displayName.value} - M
   background-size: 200% 100%; animation: shimmer 1.5s infinite linear; z-index: 5; 
 }
 @keyframes shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
+
 .img-preview {
   position: absolute; top: 0; left: 0; width: 100%; height: 100%;
   object-fit: cover; display: block; z-index: 1; filter: blur(10px); transform: scale(1.1);
@@ -520,9 +537,11 @@ useHead({ title: computed(() => currentProduct.value ? `${displayName.value} - M
   object-fit: cover; display: block; z-index: 2; opacity: 0; transition: opacity 0.5s ease;
 }
 .img-main.is-loaded { opacity: 1; }
+
 @media (min-width: 1024px) {
   .image-wrapper { position: sticky; top: 40px; box-shadow: 0 10px 30px rgba(0,0,0,0.05); z-index: 10; }
 }
+
 .desktop-nav-controls { display: none; }
 @media (min-width: 1024px) {
   .desktop-nav-controls {
@@ -537,18 +556,22 @@ useHead({ title: computed(() => currentProduct.value ? `${displayName.value} - M
   }
   .nav-arrow:hover { transform: scale(1.1); background: white; }
 }
+
 .details-column { padding: 20px; background: white; }
 @media (min-width: 1024px) { .details-column { padding: 1rem; background: transparent; } }
+
 .product-title { font-size: 1.5rem; font-weight: 800; text-transform: uppercase; margin-bottom: 0.5rem; line-height: 1.2; }
 .price-block { margin-bottom: 1rem; display: flex; align-items: baseline; gap: 10px; }
 .price-current { font-size: 1.5rem; font-weight: 700; color: var(--primary, #dc2626); }
 .price-old { font-size: 1rem; text-decoration: line-through; color: var(--text-light, #6b7280); }
 .product-description { color: var(--text-light, #6b7280); font-size: 0.95rem; line-height: 1.5; }
 .divider { border: 0; border-top: 1px solid var(--border, #e5e7eb); margin: 1.5rem 0; }
+
 .section-block { margin-bottom: 2rem; }
 .section-title { font-size: 1rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; margin: 0; }
 .group-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; }
 .group-requirements { font-size: 0.75rem; background: #eee; padding: 2px 8px; border-radius: 10px; color: #555; font-weight: 600; }
+
 .base-products-grid { display: grid; gap: 10px; margin-top: 10px; }
 .base-item-card { display: flex; align-items: center; gap: 10px; padding: 10px; border: 1px solid var(--border, #e5e7eb); border-radius: 12px; background: white; }
 .base-item-img { width: 50px; height: 50px; border-radius: 8px; overflow: hidden; flex-shrink: 0; }
@@ -557,22 +580,26 @@ useHead({ title: computed(() => currentProduct.value ? `${displayName.value} - M
 .base-qty-badge { font-size: 0.75rem; font-weight: bold; background: #f3f4f6; padding: 2px 6px; border-radius: 4px; display: inline-block; margin-bottom: 2px; }
 .base-name { display: block; font-size: 0.9rem; font-weight: 500; }
 .btn-change-base { background: black; color: white; border: none; font-size: 0.75rem; padding: 6px 12px; border-radius: 20px; font-weight: 600; cursor: pointer; }
+
 .modifiers-list { display: flex; flex-direction: column; gap: 12px; }
 .modifier-row { display: flex; align-items: center; gap: 12px; padding: 12px; border: 1px solid var(--border, #e5e7eb); border-radius: 12px; background: white; cursor: pointer; transition: all 0.2s ease; }
 .modifier-row:hover { border-color: #ccc; }
 .modifier-row.is-selected { border-color: var(--primary, #dc2626); background-color: #fff5f5; }
+
 .custom-check { width: 20px; height: 20px; border: 2px solid #ccc; border-radius: 4px; position: relative; transition: all 0.2s; }
 .custom-check.type-radio { border-radius: 50%; }
 .custom-check.checked { background-color: var(--primary, #dc2626); border-color: var(--primary, #dc2626); }
 .custom-check.checked::after { content: ''; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 8px; height: 8px; background: white; border-radius: 1px; }
 .custom-check.type-radio.checked::after { border-radius: 50%; }
+
 .modifier-info { flex: 1; display: flex; justify-content: space-between; align-items: center; font-size: 0.95rem; }
 .modifier-price { font-weight: 600; font-size: 0.9rem; color: var(--text-light, #6b7280); }
+
 .modifier-qty-control { display: flex; align-items: center; background: white; border: 1px solid var(--border, #e5e7eb); border-radius: 8px; overflow: hidden; }
 .qty-btn-mini { background: #f9fafb; border: none; padding: 5px 10px; cursor: pointer; font-weight: bold; }
 .qty-val-mini { padding: 0 5px; font-size: 0.85rem; font-weight: 600; }
 
-/* FOOTER STYLES */
+/* FOOTER */
 .sticky-footer { position: fixed; bottom: 0; left: 0; width: 100%; background: white; padding: 15px 20px; box-shadow: 0 -4px 20px rgba(0,0,0,0.08); z-index: 100; }
 .footer-inner { max-width: 800px; margin: 0 auto; display: flex; gap: 15px; align-items: center; }
 
@@ -580,19 +607,15 @@ useHead({ title: computed(() => currentProduct.value ? `${displayName.value} - M
 .qty-btn-main { width: 40px; height: 100%; border: none; background: transparent; font-size: 1.2rem; cursor: pointer; display: flex; align-items: center; justify-content: center; color: var(--text-main, #1f2937); }
 .qty-val-main { width: 30px; text-align: center; font-weight: 700; font-size: 1.1rem; }
 
-/* Botones Comunes */
 .add-cart-btn { flex: 1; border-radius: 12px; padding: 0 20px; font-size: 1rem; font-weight: 700; cursor: pointer; transition: all 0.2s; height: 50px; border: none; display: flex; align-items: center; justify-content: center; }
 .btn-content { display: flex; justify-content: space-between; align-items: center; width: 100%; }
 .btn-content-pc { display: flex; min-width: max-content; flex-direction: column; align-items: center; line-height: 1.1; }
 
-/* Estilos de botones específicos */
 .btn-primary { background: var(--primary, #dc2626); color: white; }
 .btn-primary:hover { background: var(--primary-dark, #b91c1c); }
-
 .btn-secondary { background: white; color: var(--text-main, #1f2937); border: 2px solid #e5e7eb; }
 .btn-secondary:hover { border-color: var(--primary, #dc2626); color: var(--primary, #dc2626); }
 
-/* Control de visibilidad PC vs Móvil */
 .btn-mobile-only { display: flex; background: var(--primary, #dc2626); color: white; }
 .btn-desktop-only { display: none; }
 
@@ -602,7 +625,7 @@ useHead({ title: computed(() => currentProduct.value ? `${displayName.value} - M
   .footer-inner { max-width: 900px; }
 }
 
-/* MODAL STYLES */
+/* MODAL */
 .modal-backdrop { position: fixed; inset: 0; background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; z-index: 200; padding: 20px; }
 .modal-card { background: white; border-radius: 16px; width: 100%; max-width: 400px; overflow: hidden; box-shadow: 0 20px 50px rgba(0,0,0,0.2); }
 .modal-header { padding: 15px; border-bottom: 1px solid #eee; display: flex; justify-content: space-between; align-items: center; }
@@ -611,7 +634,6 @@ useHead({ title: computed(() => currentProduct.value ? `${displayName.value} - M
 .close-modal-btn { background: #f3f4f6; border: none; width: 30px; height: 30px; border-radius: 50%; cursor: pointer; font-weight: bold; }
 .modal-body { padding: 20px; max-height: 60vh; overflow-y: auto; }
 
-/* Estilos específicos para el Modal Post-Add */
 .modal-center-text { text-align: center; }
 .modal-msg { margin-bottom: 20px; font-size: 1.1rem; color: #4b5563; }
 .flex-column-actions { display: flex; flex-direction: column; gap: 12px; }
@@ -621,7 +643,6 @@ useHead({ title: computed(() => currentProduct.value ? `${displayName.value} - M
 .btn-go-pay { background: var(--primary, #dc2626); color: white; box-shadow: 0 4px 12px rgba(220, 38, 38, 0.3); }
 .btn-keep-shopping { background: #f3f4f6; color: #1f2937; border: 1px solid #e5e7eb; }
 
-/* Grid Options (Modal Cambio) */
 .grid-options { display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px; }
 .option-card { border: 1px solid #eee; background: white; padding: 10px; border-radius: 10px; cursor: pointer; display: flex; flex-direction: column; align-items: center; text-align: center; transition: transform 0.1s; }
 .option-card:hover { transform: scale(1.03); border-color: #ccc; }
