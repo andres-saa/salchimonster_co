@@ -55,32 +55,29 @@
 </template>
 
 <script setup>
-import {
-  ref,
-  computed,
-  nextTick,
-  watch,
-  onMounted,
-  onBeforeUnmount
-} from 'vue'
+import { ref, computed, nextTick, watch, onMounted, onBeforeUnmount } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import CarouselBanners from '~/components/carouselBanners.vue'
 import MenuCategoriesBar from '~/components/MenuCategoriesBar.vue'
 import MenuProductCard from '~/components/MenuProductCard.vue'
 import { URI } from '~/service/conection'
 import { useHead, useFetch, useSitesStore, useMenuStore, useUserStore } from '#imports'
+
 const route = useRoute()
 const router = useRouter()
 const sitesStore = useSitesStore()
 const menuStore = useMenuStore()
-const userStore = useUserStore() // <--- Inicialízalo aquí
+const userStore = useUserStore()
+
 /* ==========================
    CONFIGURACIÓN DE CACHÉ
    ========================== */
 const CACHE_TTL = 30 * 60 * 1000
+
 const isLoggedIn = computed(() => {
   return !!userStore.user?.token && !!userStore.user?.inserted_by
 })
+
 /* ==========================
    ESTADO PARA REFRESCO EN CLIENTE
    ========================== */
@@ -99,18 +96,12 @@ const doClientRefresh = async (refreshFn) => {
 /* ==========================
    SITE ID
    ========================== */
-const siteId = computed(
-  () => (sitesStore?.location?.site?.site_id) || 1
-)
+const siteId = computed(() => (sitesStore?.location?.site?.site_id) || 1)
 
 /* ==========================
    FETCH & HIDRATACIÓN INTELIGENTE
    ========================== */
-const {
-  data: rawCategoriesData,
-  refresh,
-  pending: menuPending
-} = useFetch(
+const { data: rawCategoriesData, refresh, pending: menuPending } = useFetch(
   () => `${URI}/tiendas/${siteId.value}/products`,
   {
     key: () => `menu-data-${siteId.value}`,
@@ -122,35 +113,25 @@ const {
 if (process.client) {
   const cachedWrapper = menuStore.getMenuBySite(siteId.value)
 
-  if (cachedWrapper && cachedWrapper.data && cachedWrapper.timestamp) {
+  if (cachedWrapper?.data && cachedWrapper?.timestamp) {
     const now = Date.now()
     const age = now - cachedWrapper.timestamp
 
     if (age < CACHE_TTL) {
-      console.log(
-        `[Menu] Usando caché fresca (Edad: ${Math.round(age / 1000)}s)`
-      )
       rawCategoriesData.value = cachedWrapper.data
-    } else {
-      console.log('[Menu] Caché expirada. Usando datos de red/SSR.')
     }
   }
 }
 
 /* ==========================
-   DATA FUENTE & PERSISTENCIA
+   PERSISTIR EN CACHÉ
    ========================== */
-const sourceData = computed(() => rawCategoriesData.value)
-
 watch(
   rawCategoriesData,
   (val) => {
     if (!process.client) return
     if (val && Array.isArray(val.categorias) && val.categorias.length) {
-      menuStore.setMenuForSite(siteId.value, {
-        data: val,
-        timestamp: Date.now()
-      })
+      menuStore.setMenuForSite(siteId.value, { data: val, timestamp: Date.now() })
     }
   },
   { immediate: true }
@@ -175,20 +156,14 @@ const formatLabel = (str) => {
    ADAPTACIÓN DE LA DATA
    ========================== */
 const categories = computed(() => {
-  const raw = sourceData.value
+  const raw = rawCategoriesData.value
   if (!raw || !Array.isArray(raw.categorias)) return []
 
   return raw.categorias
-    .filter(
-      (cat) =>
-        cat.visible &&
-        Array.isArray(cat.products) &&
-        cat.products.length > 0
-    )
+    .filter((cat) => cat.visible && Array.isArray(cat.products) && cat.products.length > 0)
     .map((cat) => {
       const category_id = Number(cat.categoria_id)
-      const category_name =
-        cat.categoria_descripcion || cat.english_name || ''
+      const category_name = cat.categoria_descripcion || cat.english_name || ''
 
       const products = (cat.products || []).map((p) => ({
         ...p,
@@ -207,32 +182,24 @@ const categories = computed(() => {
           ''
       }))
 
-      return {
-        ...cat,
-        category_id,
-        category_name,
-        products
-      }
+      return { ...cat, category_id, category_name, products }
     })
 })
 
 /* ==========================
-   ESTADO DE CARGA (NUEVO)
+   LOADER
    ========================== */
-// Mostramos loader si está pendiente Y no tenemos categorías previas (evita parpadeo si hay caché)
-const showLoader = computed(() => {
-  return menuPending.value && categories.value.length === 0
-})
+const showLoader = computed(() => menuPending.value && categories.value.length === 0)
 
 /* ==========================
-   NAVEGACIÓN DE PRODUCTOS
+   CLICK PRODUCTO
    ========================== */
 const onClickProduct = (category, product) => {
   router.push(`/producto/${product.id}`)
 }
 
 /* ==========================
-   REFS / OBSERVERS
+   REFS / OBSERVERS (COPIADOS DEL QUE FUNCIONA)
    ========================== */
 const activeCategoryId = ref(null)
 const categoryRefs = ref({})
@@ -244,9 +211,30 @@ const productCategoryObserver = ref(null)
 const isProgrammaticScroll = ref(false)
 let programmaticScrollTimer = null
 
+// ✅ Esta función es la parte que suele faltar cuando hay SSR/caché: re-observar lo ya renderizado
+const observeAllProducts = () => {
+  if (!process.client) return
+  const els = Object.values(productRefs.value)
+
+  els.forEach((el) => {
+    if (!el) return
+
+    // animación inicial
+    el.classList.add('menu-product-card--hidden')
+
+    if (productObserver.value) {
+      productObserver.value.observe(el)
+    }
+    if (productCategoryObserver.value) {
+      productCategoryObserver.value.observe(el)
+    }
+  })
+}
+
 onMounted(async () => {
   if (!process.client) return
 
+  // Observer para animación de entrada de productos
   productObserver.value = new IntersectionObserver(
     (entries, obs) => {
       entries.forEach((entry) => {
@@ -259,35 +247,57 @@ onMounted(async () => {
         }
       })
     },
-    { rootMargin: '0px 0px -10% 0px', threshold: 0.1 }
+    {
+      root: null,
+      rootMargin: '0px 0px -10% 0px',
+      threshold: 0.1
+    }
   )
 
+  // Observer para actualizar categoría activa según productos visibles
   productCategoryObserver.value = new IntersectionObserver(
     (entries) => {
+      // Mientras estamos haciendo scroll programático NO actualizamos categoría
       if (isProgrammaticScroll.value) return
+
       const visibles = []
+
       entries.forEach((entry) => {
         if (!entry.isIntersecting) return
         const el = entry.target
         if (!el) return
+
         const catId = Number(el.dataset.categoryId || '')
         if (!catId) return
-        visibles.push({ catId, top: entry.boundingClientRect.top })
+
+        visibles.push({
+          catId,
+          top: entry.boundingClientRect.top
+        })
       })
 
       if (!visibles.length) return
+
+      // Tomamos el producto más cercano a la parte superior del viewport
       visibles.sort((a, b) => a.top - b.top)
       const best = visibles[0]
+
       if (best.catId && best.catId !== activeCategoryId.value) {
         activeCategoryId.value = best.catId
       }
     },
-    { rootMargin: '-120px 0px -60% 0px', threshold: 0.3 }
+    {
+      root: null,
+      rootMargin: '-120px 0px -60% 0px',
+      threshold: 0.3
+    }
   )
 
-  // Nota: Observamos en un watcher o nextTick cuando carguen las categorías, 
-  // ya que al inicio showLoader puede ser true y no hay elementos DOM aún.
+  // ✅ IMPORTANTÍSIMO: enganchar lo que ya exista en el DOM
+  await nextTick()
+  observeAllProducts()
 
+  // refresco inicial y refresco periódico
   await doClientRefresh(refresh)
 
   clientRefreshIntervalId = window.setInterval(() => {
@@ -295,22 +305,14 @@ onMounted(async () => {
   }, 10 * 60 * 1000)
 })
 
-// Watch para reconectar observers cuando el loader desaparece y hay contenido
-watch(showLoader, (isLoading) => {
-    if (!isLoading) {
-        nextTick(() => {
-             // Re-verificar refs si es necesario o simplemente dejar que el v-for lo maneje
-             // La lógica de setProductRef se encarga de conectar el observer
-        })
-    }
-})
-
 onBeforeUnmount(() => {
   if (productObserver.value) productObserver.value.disconnect()
   if (productCategoryObserver.value) productCategoryObserver.value.disconnect()
+
   if (programmaticScrollTimer && process.client) {
     window.clearTimeout(programmaticScrollTimer)
   }
+
   if (clientRefreshIntervalId && process.client) {
     window.clearInterval(clientRefreshIntervalId)
   }
@@ -325,6 +327,7 @@ const setCategoryRef = (id, el) => {
 }
 
 const setProductRef = (productId, categoryId, el) => {
+  // Cuando el elemento se destruye
   if (!el) {
     const prevEl = productRefs.value[productId]
     if (prevEl) {
@@ -334,10 +337,16 @@ const setProductRef = (productId, categoryId, el) => {
     delete productRefs.value[productId]
     return
   }
+
   productRefs.value[productId] = el
+
+  // animación inicial
   el.classList.add('menu-product-card--hidden')
+
+  // Guardamos ids para el observer de categoría
   el.dataset.productId = String(productId)
   el.dataset.categoryId = String(categoryId)
+
   if (productObserver.value) productObserver.value.observe(el)
   if (productCategoryObserver.value) productCategoryObserver.value.observe(el)
 }
@@ -345,7 +354,7 @@ const setProductRef = (productId, categoryId, el) => {
 /* ==========================
    SCROLL A CATEGORÍA
    ========================== */
-const HEADER_OFFSET = 7 * 16
+const HEADER_OFFSET = 7 * 16 // 7rem
 
 const scrollToCategoryId = (id) => {
   if (!process.client) return
@@ -354,6 +363,7 @@ const scrollToCategoryId = (id) => {
   if (!el) return
 
   const y = el.getBoundingClientRect().top + window.scrollY - HEADER_OFFSET
+
   isProgrammaticScroll.value = true
   if (programmaticScrollTimer) window.clearTimeout(programmaticScrollTimer)
 
@@ -369,10 +379,15 @@ const scrollToCategoryId = (id) => {
    ========================== */
 const onClickCategory = (category) => {
   activeCategoryId.value = category.category_id
+
   router.push({
     path: route.path,
-    query: { category: category.category_name }
+    query: {
+      ...route.query,
+      category: category.category_name
+    }
   })
+
   nextTick(() => {
     scrollToCategoryId(category.category_id)
   })
@@ -383,11 +398,14 @@ const scrollFromRoute = () => {
 
   const q = route.query.category
   if (!q || typeof q !== 'string') return
+
   const target = categories.value.find(
     (c) => normalize(c.category_name) === normalize(q)
   )
+
   if (!target) return
   activeCategoryId.value = target.category_id
+
   nextTick(() => {
     scrollToCategoryId(target.category_id)
   })
@@ -401,17 +419,31 @@ watch(
   { immediate: true, flush: 'post' }
 )
 
+// ✅ aquí metimos el “paso 3” que tu componente nuevo no tenía
 watch(
   categories,
   (list) => {
     if (!list.length) return
+
+    // 1) si viene ?category=
     if (route.query.category && typeof route.query.category === 'string') {
       scrollFromRoute()
       return
     }
+
+    // 2) si no viene, primera categoría
     if (activeCategoryId.value == null) {
       activeCategoryId.value = list[0].category_id
     }
+
+    // 3) scroll cuando el DOM ya existe
+    nextTick(() => {
+      if (activeCategoryId.value != null) {
+        scrollToCategoryId(activeCategoryId.value)
+      }
+      // y de paso re-observamos por si el refresh cambió DOM/refs
+      observeAllProducts()
+    })
   },
   { immediate: true, flush: 'post' }
 )
@@ -428,73 +460,21 @@ const pageTitle = computed(() => {
   return base
 })
 
-useHead(() => ({
-  title: pageTitle.value
-}))
+useHead(() => ({ title: pageTitle.value }))
 </script>
-
 
 <style scoped>
 .menu-page {
   min-height: 100vh;
-  /* background: #f3f4f6; */
   color: #111827;
-  font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI',
-    sans-serif;
-
-}
-
-/* HERO (si lo quieres usar) */
-.menu-hero {
-  position: relative;
-  height: 220px;
-  width: 100%;
-  background-image:
-    linear-gradient(rgba(0, 0, 0, 0), rgba(0, 0, 0, 0.95)),
-    url('https://images.pexels.com/photos/4109087/pexels-photo-4109087.jpeg');
-  background-size: cover;
-  background-position: center;
-}
-
-.menu-hero__overlay {
-  position: absolute;
-  inset: 0;
-}
-
-.menu-hero__content {
-  position: relative;
-  z-index: 1;
-  max-width: 1200px;
-  margin: 0 auto;
-  height: 100%;
-  color: white;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  padding: 1.5rem;
-    
-}
-
-.menu-hero__title {
-  font-size: 2rem;
-  font-weight: 800;
-  letter-spacing: 0.02em;
-  margin: 0 0 0.5rem;
-  text-transform: none;
-}
-
-.menu-hero__subtitle {
-  margin: 0;
-  opacity: 0.8;
-  max-width: 480px;
-  font-size: 0.95rem;
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
 }
 
 /* CONTENIDO */
 .menu-content {
   max-width: 1300px;
   margin: 0rem auto 2.5rem;
-  padding:   1rem;
+  padding: 1rem;
 }
 
 /* SECCIÓN CATEGORÍA */
@@ -519,7 +499,7 @@ useHead(() => ({
 .menu-category-section__title {
   font-size: 2rem;
   font-weight: 700;
-  margin:1rem 0;
+  margin: 1rem 0;
   text-transform: none;
 }
 
@@ -529,37 +509,16 @@ useHead(() => ({
   color: #6b7280;
 }
 
- 
-
 /* GRID PRODUCTOS */
 .menu-category-section__grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
   gap: 0.9rem;
-      padding-bottom: 5rem;
-}
-
-/* RESPONSIVE ESCRITORIO */
-@media (min-width: 1024px) {
-  .menu-hero__title {
-    font-size: 2.4rem;
-  }
+  padding-bottom: 5rem;
 }
 
 /* 📱 RESPONSIVE MÓVIL */
 @media (max-width: 768px) {
-  .menu-hero {
-    height: 180px;
-  }
-
-  .menu-hero__title {
-    font-size: 1.4rem;
-  }
-
-  .menu-hero__subtitle {
-    font-size: 0.8rem;
-  }
-
   .menu-content {
     padding: 0.5rem 0.5rem 1.5rem;
     margin-bottom: 1.5rem;
@@ -578,25 +537,19 @@ useHead(() => ({
     grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 0.55rem;
   }
-
 }
 
-  
 .menu-background {
   min-height: 100vh;
-  /* Primero el degradado encima, luego la imagen */
   background-image:
     linear-gradient(
       to bottom,
       rgba(0, 0, 0, 0.596) 0,
-      rgb(255, 255, 255) 50vh, /* hasta 300px transparente */
-      #ffffff 50vh 
+      rgb(255, 255, 255) 50vh,
+      #ffffff 50vh
     ),
     url('https://backend.salchimonster.com/read-photo-product/Ym5HMDik');
-    background-repeat: no-repeat;
-    background-size: 100%
-    ;
-   
+  background-repeat: no-repeat;
+  background-size: 100%;
 }
-
 </style>
