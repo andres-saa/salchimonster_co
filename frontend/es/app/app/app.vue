@@ -5,7 +5,7 @@
     </NuxtLayout>
 
     <ToastContainer />
-    <siteDialog />
+
     <CartBar />
     <MenuSearchModal></MenuSearchModal>
   </div>
