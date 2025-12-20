@@ -54,7 +54,7 @@
             <div class="form-row">
               <div class="form-group full">
                 <label>{{ t('name') }}</label>
-                <input type="text" class="input-modern" v-model="user.user.name" :placeholder="t('name')" />
+                <inputText type="text" class="input-modern" v-model="user.user.name" :placeholder="t('name')" />
               </div>
             </div>
 
@@ -62,31 +62,37 @@
               <div class="form-group">
                 <label>{{ t('phone') }}</label>
                 <div class="phone-control">
-                  <div class="country-select" v-click-outside="() => showCountryDropdown = false">
-                    <button type="button" class="country-trigger" @click="toggleCountryDropdown">
-                      <img v-if="user.user.phone_code?.flag" :src="user.user.phone_code.flag" alt="flag">
-                      <span>{{ user.user.phone_code?.dialCode || '+57' }}</span>
-                      <Icon name="mdi:chevron-down" size="14" />
-                    </button>
-                    
-                    <div v-if="showCountryDropdown" class="country-dropdown">
-                      <input
-                        type="text"
-                        class="search-mini"
-                        v-model="countryQuery"
-                        :placeholder="t('search_country_or_code')"
-                        ref="countryInputRef"
-                        @input="onCountryInput"
-                      >
-                      <ul>
-                        <li v-for="c in countrySuggestions" :key="c.code" @click="selectCountry(c)">
-                          <img :src="c.flag" class="flag-mini"> {{ c.name }} <small>({{ c.dialCode }})</small>
-                        </li>
-                      </ul>
-                    </div>
-                  </div>
+              <div class="country-select">
+  <Select
+    v-model="user.user.phone_code"
+    :options="countries"
+    optionLabel="name"
+    placeholder="+57"
+    filter
+    :filterPlaceholder="t('search_country_or_code')"
+    class="pv-select pv-select-country"
+  >
+    <!-- cómo se ve el seleccionado -->
+    <template #value="{ value, placeholder }">
+      <div class="pv-country-value"  style="display: flex;gap: .3rem;">
+        <img v-if="value?.flag" :src="value.flag" alt="flag" class="flag-mini" />
+        <span class="pv-country-dial">{{ value?.dialCode || placeholder }}</span>
+      </div>
+    </template>
+
+    <!-- cómo se ve cada opción -->
+    <template #option="{ option }">
+      <div class="pv-country-option" style="display: flex;gap: .3rem;">
+        <img :src="option.flag" class="flag-mini" alt="flag" />
+        <span class="pv-country-name">{{ option.name }}</span>
+        <small class="pv-country-code"> ({{ option.dialCode }})</small>
+      </div>
+    </template>
+  </Select>
+</div>
+
                   
-                  <input
+                  <inputText
                     type="tel"
                     class="input-modern input-phone"
                     v-model="user.user.phone_number"
@@ -99,7 +105,7 @@
 
               <div class="form-group">
                 <label>{{ t('email') }}</label>
-                <input type="email" class="input-modern" v-model="user.user.email" :placeholder="t('email')" />
+                <inputText type="email" class="input-modern" v-model="user.user.email" :placeholder="t('email')" />
               </div>
             </div>
           </section>
@@ -141,7 +147,7 @@
 
             <div class="form-group mt-3" v-if="!isPickup">
               <label>{{ lang === 'en' ? 'Exact Address' : 'Dirección exacta' }}</label>
-              <input 
+              <inputText 
                 type="text" 
                 class="input-modern" 
                 v-model="user.user.address" 
@@ -154,6 +160,7 @@
               <input type="text" class="input-modern" v-model="user.user.placa" placeholder="ABC-123" />
             </div>
           </section>
+          
 
           <section class="card form-section">
             <h2 class="section-title">Pago & Detalles</h2>
@@ -211,26 +218,29 @@
 
             <div class="form-group" v-if="computedPaymentOptions.length > 0">
               <label>{{ t('payment_method') }}</label>
-              <div class="select-wrapper">
-                <Icon name="mdi:credit-card-outline" class="select-icon" />
-                <select class="input-modern with-icon" v-model="user.user.payment_method_option">
-                  <option value="" disabled selected>{{ lang === 'en' ? 'Select an option' : 'Selecciona una opción' }}</option>
-                  <option v-for="opt in computedPaymentOptions" :key="opt.id" :value="opt">
-                    {{ opt.name }}
-                  </option>
-                </select>
-                <Icon name="mdi:chevron-down" class="select-arrow" />
-              </div>
+    <div class="select-wrapper">
+  <Icon name="mdi:credit-card-outline" class="select-icon" />
+
+  <Select
+    v-model="user.user.payment_method_option"
+    :options="computedPaymentOptions"
+    optionLabel="name"
+    placeholder="Selecciona una opción"
+    class="pv-select pv-select-payment input-modern with-icon"
+  />
+ 
+</div>
+
             </div>
 
             <div class="form-group">
               <label>{{ t('notes') }}</label>
-              <textarea
+              <Textarea
                 class="input-modern"
                 rows="3"
                 v-model="store.order_notes"
                 :placeholder="t('additional_notes')"
-              ></textarea>
+              ></Textarea>
             </div>
           </section>
 
@@ -385,14 +395,8 @@ watch(
 
 /* ================= LÓGICA DE TELÉFONO ================= */
 const phoneError = ref('')
-const countrySuggestions = ref([])
+ 
 const countries = ref([])
-const showCountryDropdown = ref(false)
-const countryQuery = ref('')
-const countryInputRef = ref(null)
-
-const norm = (s) => (s || '').toString().trim().toLowerCase()
-const onlyDigits = (s) => (s || '').replace(/\D+/g, '')
 
 const initCountries = () => {
   countries.value = buildCountryOptions(lang.value).map(c => ({
@@ -400,34 +404,9 @@ const initCountries = () => {
     dialDigits: (c.dialCode || '').replace(/\D+/g, ''),
     flag: `https://flagcdn.com/h20/${c.code.toLowerCase()}.png`
   }))
-  countrySuggestions.value = countries.value.slice(0, 50)
 }
 
-const onCountryInput = () => {
-  const q = norm(countryQuery.value)
-  const qDigits = onlyDigits(countryQuery.value)
-  if (!q) { countrySuggestions.value = countries.value.slice(0, 50); return }
-  countrySuggestions.value = countries.value.filter(c => {
-    if (norm(c.name).includes(q) || norm(c.code).includes(q)) return true
-    if (qDigits && c.dialDigits.startsWith(qDigits)) return true
-    return false
-  }).slice(0, 50)
-}
-
-const toggleCountryDropdown = () => {
-  showCountryDropdown.value = !showCountryDropdown.value
-  if(showCountryDropdown.value) {
-    countrySuggestions.value = countries.value.slice(0, 50)
-    setTimeout(() => countryInputRef.value?.focus(), 100)
-  }
-}
-
-const selectCountry = (c) => {
-  user.user.phone_code = c
-  showCountryDropdown.value = false
-  countryQuery.value = ''
-}
-
+ 
 const formatPhoneOnBlur = () => {
   const countryIso = user.user.phone_code?.code
   const phone = parsePhoneNumberFromString(user.user.phone_number || '', countryIso)
@@ -766,8 +745,7 @@ watch(lang, initCountries)
 @media(min-width: 600px) { .form-row.split { grid-template-columns: 1fr 1fr; } }
 label { display: block; font-size: 0.85rem; font-weight: 600; margin-bottom: 0.5rem; color: #374151; }
 .input-modern {
-  width: 100%; padding: 0.75rem 1rem; border: 1px solid var(--border);
-  border-radius: var(--radius-sm); font-size: 0.95rem; background: #fff; transition: all 0.2s; outline: none;
+  width: 100%;    
 }
 .input-modern:focus { border-color: var(--border-focus); box-shadow: 0 0 0 3px rgba(0,0,0,0.05); }
 textarea.input-modern { resize: vertical; min-height: 80px; }
@@ -832,9 +810,11 @@ textarea.input-modern { resize: vertical; min-height: 80px; }
 .discount-amount { font-size: 0.85rem; color: #047857; margin-top: 2px; }
 
 .select-wrapper { position: relative; }
-.with-icon { padding-left: 2.5rem; appearance: none; }
+ 
 .select-icon { position: absolute; left: 0.8rem; top: 50%; transform: translateY(-50%); color: #6b7280; pointer-events: none; }
 .select-arrow { position: absolute; right: 0.8rem; top: 50%; transform: translateY(-50%); pointer-events: none; font-size: 1.2rem; }
 
 .mt-3 { margin-top: 1rem; }
+
+ 
 </style>

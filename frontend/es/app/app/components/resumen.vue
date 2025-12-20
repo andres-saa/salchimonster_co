@@ -78,7 +78,7 @@
 
         <div class="total-row" v-if="siteStore?.location?.site?.site_id != 33">
           <div class="label-wrapper">
-             <span class="label" :class="{ 'strike': siteStore.location.neigborhood.delivery_price == 0 && !isEditingDelivery }">
+            <span class="label" :class="{ 'strike': deliveryPrice === 0 && !isEditingDelivery }">
                Domicilio
              </span>
              <button 
@@ -93,12 +93,7 @@
           
           <div class="value">
             <div v-if="isEditingDelivery">
-              <input 
-                type="number" 
-                v-model.number="siteStore.location.neigborhood.delivery_price" 
-                class="delivery-input"
-                min="0"
-              />
+          <input type="number" v-model.number="deliveryPrice" />
             </div>
 
             <div v-else>
@@ -117,11 +112,7 @@
         <div class="total-row final-total">
           <span class="label">Total</span>
           <span class="value">
-            {{ 
-              formatoPesosColombianos(
-                store.cartTotal + (siteStore.location.neigborhood.delivery_price || 0)
-              ) 
-            }}
+         {{ formatoPesosColombianos(store.cartTotal + (deliveryPrice || 0)) }}
           </span>
         </div>
       </div>
@@ -212,6 +203,32 @@ useHead({
   ]
 })
 
+
+const deliveryPrice = computed({
+  get: () => {
+    // 1) Barrios (lo normal)
+    const nb = siteStore.location?.neigborhood
+    if (nb && nb.delivery_price != null) return Number(nb.delivery_price) || 0
+
+    // 2) Google (coverage-details)
+    const ad = store.address_details || siteStore.location?.address_details
+    if (ad && ad.delivery_cost_cop != null) return Number(ad.delivery_cost_cop) || 0
+
+    // 3) fallback extra (por si lo guardaste en user.site)
+    const u = user.user?.site
+    if (u && u.delivery_cost_cop != null) return Number(u.delivery_cost_cop) || 0
+
+    return 0
+  },
+  set: (v) => {
+    // Si estás editando manualmente, garantizamos que exista neigborhood
+    if (!siteStore.location.neigborhood) siteStore.location.neigborhood = {}
+    siteStore.location.neigborhood.delivery_price = Math.max(0, Number(v) || 0)
+  }
+})
+
+
+
 const reportes = useReportesStore()
 const route = useRoute()
 const store = usecartStore()
@@ -274,7 +291,7 @@ const payWithEpayco = (id) => {
   })
 
   // Usamos el precio del domicilio del store (que pudo ser editado manualmente)
-  const totalAPagar = store.cartTotal + (siteStore.location.neigborhood.delivery_price || 0)
+  const totalAPagar = store.cartTotal + (deliveryPrice.value || 0)
 
   handler.open({
     name: id,

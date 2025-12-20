@@ -7,9 +7,10 @@
     <ToastContainer />
 
     <CartBar />
-    <MenuSearchModal></MenuSearchModal>
+    <MenuSearchModal />
   </div>
 </template>
+
 <script setup>
 import { onMounted } from '#imports'
 import { useRoute, useRouter } from '#imports'
@@ -24,24 +25,103 @@ const sede = useSedeFromSubdomain()
 const route = useRoute()
 const router = useRouter()
 
+function cleanQueryParams({ removeHash = false, removeCredentials = false, removeIframe = false } = {}) {
+  const q = { ...route.query }
+  let changed = false
+
+  if (removeHash && q.hash !== undefined) {
+    q.hash = undefined
+    changed = true
+  }
+
+  if (removeCredentials) {
+    if (q.inserted_by !== undefined) { q.inserted_by = undefined; changed = true }
+    if (q.token !== undefined) { q.token = undefined; changed = true }
+  }
+
+  if (removeIframe && q.iframe !== undefined) {
+    q.iframe = undefined
+    changed = true
+  }
+
+  if (changed) router.replace({ query: q })
+}
+
+function restoreLocationFromMeta(meta) {
+  if (!meta) return
+
+  // ciudad
+  if (meta.city) siteStore.location.city = meta.city
+
+  // modo (google | barrios)
+  if (meta.mode) siteStore.location.mode = meta.mode
+
+  // ========= GOOGLE MODE =========
+  if (meta.mode === 'google') {
+    siteStore.location.formatted_address = meta.formatted_address || ''
+    siteStore.location.place_id = meta.place_id || ''
+    siteStore.location.lat = meta.lat ?? null
+    siteStore.location.lng = meta.lng ?? null
+    siteStore.location.address_details = meta.address_details ?? null
+
+    const price = meta.delivery_price ?? meta.price ?? 0
+
+    // barrio "vacío" pero EXISTE y con precio
+    siteStore.location.neigborhood = {
+      name: '',
+      delivery_price: price,
+      neighborhood_id: null,
+      id: null,
+      site_id: null,
+    }
+
+    siteStore.current_delivery = price
+    return
+  }
+
+  // ========= BARRIOS MODE =========
+  // si manda neigborhood completo
+  if (meta.neigborhood) {
+    const nb = meta.neigborhood
+    const price = nb.delivery_price ?? meta.delivery_price ?? 0
+
+    siteStore.location.neigborhood = {
+      name: nb.name || '',
+      delivery_price: price,
+      neighborhood_id: nb.neighborhood_id ?? nb.id ?? null,
+      id: nb.id ?? nb.neighborhood_id ?? null,
+      site_id: nb.site_id ?? null,
+    }
+
+    siteStore.current_delivery = price
+  } else {
+    // fallback seguro
+    siteStore.location.neigborhood = {
+      name: '',
+      delivery_price: 0,
+      neighborhood_id: null,
+      id: null,
+      site_id: null,
+    }
+    siteStore.current_delivery = 0
+  }
+}
+
 onMounted(async () => {
   let siteLoadedFromHash = false
+
   const hash = route.query.hash
-  
+
   // ======================================================
-  // 0) RECUPERAR / CAPTURAR CREDENCIALES
+  // 0) RECUPERAR / CAPTURAR CREDENCIALES (F5 safe)
   // ======================================================
-  
-  // A. Intentar recuperar del LocalStorage primero (Para que sobreviva al F5)
-  // Usamos una clave única, por ejemplo 'session_external_data'
   const storedSession = localStorage.getItem('session_external_data')
   if (storedSession) {
     try {
       const parsedSession = JSON.parse(storedSession)
-      // Mezclamos con lo que ya tenga el usuario
       userStore.user = {
         ...userStore.user,
-        ...parsedSession
+        ...parsedSession,
       }
       console.log('💾 Sesión restaurada desde LocalStorage (F5 safe)')
     } catch (e) {
@@ -49,31 +129,27 @@ onMounted(async () => {
     }
   }
 
-  // B. Capturar de la URL (Tienen prioridad y sobreescriben LocalStorage)
+  // URL params (prioridad)
   const qInsertedBy = route.query.inserted_by
   const qToken = route.query.token
   const qiframe = route.query.iframe
-  
-  // Validación estricta del iframe como Boolean
+
   const isIframe = qiframe === '1'
 
-  // Si llegan credenciales nuevas en la URL...
   if (qInsertedBy && qToken) {
-    const sessionData = { 
-      inserted_by: qInsertedBy, 
-      token: qToken, 
-      iframe: isIframe // Guardamos el booleano real
+    const sessionData = {
+      inserted_by: qInsertedBy,
+      token: qToken,
+      iframe: isIframe,
     }
 
     console.log('🔗 Credenciales detectadas en URL. Actualizando Store y LocalStorage.')
-    
-    // 1. Actualizar Store
+
     userStore.user = {
       ...userStore.user,
-      ...sessionData
+      ...sessionData,
     }
 
-    // 2. Persistir en LocalStorage (Aquí está el truco para que no mueran al recargar)
     localStorage.setItem('session_external_data', JSON.stringify(sessionData))
   }
 
@@ -98,42 +174,41 @@ onMounted(async () => {
 
         // B) Restaurar Usuario
         if (restoredData.user) {
-          // Nota: Aquí damos prioridad a 'iframe' de la URL/LocalStorage sobre el Hash antiguo
-          const currentIframeState = userStore.user.iframe 
-          
+          // prioridad iframe (URL/LocalStorage) sobre hash viejo
+          const currentIframeState = userStore.user.iframe
           userStore.user = {
             ...userStore.user,
             ...restoredData.user,
-            iframe: (currentIframeState !== undefined) ? currentIframeState : restoredData.user.iframe
+            iframe: (currentIframeState !== undefined) ? currentIframeState : restoredData.user.iframe,
           }
         }
 
-        // C) Restaurar Location (Simplificado para el ejemplo)
-        const metaCity = restoredData?.location_meta?.city
-        if (metaCity) siteStore.location.city = metaCity
-        // ... (Tu lógica de location neigborhood va aquí igual que antes) ...
+        // C) Restaurar Location meta (GOOGLE / BARRIOS)
+        restoreLocationFromMeta(restoredData?.location_meta)
 
         // D) Restaurar Carrito
         if (restoredData.cart) {
-           const cartItems = Array.isArray(restoredData.cart) ? restoredData.cart : (restoredData.cart.items || [])
-           if (cartItems.length > 0) cartStore.cart = Array.isArray(restoredData.cart) ? restoredData.cart : restoredData.cart
+          const cartItems = Array.isArray(restoredData.cart)
+            ? restoredData.cart
+            : (restoredData.cart.items || [])
+
+          if (cartItems.length > 0) {
+            cartStore.cart = Array.isArray(restoredData.cart)
+              ? restoredData.cart
+              : restoredData.cart
+          }
         }
-        
+
         // E) Restaurar Cupón
         if (restoredData.discount) cartStore.applyCoupon(restoredData.discount)
         if (restoredData.coupon_ui && cartStore.setCouponUi) cartStore.setCouponUi(restoredData.coupon_ui)
 
-        // F) Limpiar la URL (Hash + Params)
-        const queryToClean = { ...route.query, hash: undefined }
-        if (qInsertedBy && qToken) {
-           queryToClean.inserted_by = undefined
-           queryToClean.token = undefined
-        }
-        if (qiframe !== undefined) {
-           queryToClean.iframe = undefined
-        }
-
-        router.replace({ query: queryToClean })
+        // F) Limpiar URL (hash + credenciales + iframe)
+        cleanQueryParams({
+          removeHash: true,
+          removeCredentials: !!(qInsertedBy && qToken),
+          removeIframe: qiframe !== undefined,
+        })
 
       } else {
         console.warn('⚠️ El hash no retornó datos válidos.')
@@ -161,25 +236,16 @@ onMounted(async () => {
           }
         }
       }
-      
-      // Limpieza de params
-      const queryToClean = { ...route.query }
-      let needsClean = false
 
-      if (qInsertedBy && qToken) {
-          queryToClean.inserted_by = undefined
-          queryToClean.token = undefined
-          needsClean = true
+      // Limpieza de params (credenciales + iframe)
+      const needsCredClean = !!(qInsertedBy && qToken)
+      const needsIframeClean = qiframe !== undefined
+      if (needsCredClean || needsIframeClean) {
+        cleanQueryParams({
+          removeCredentials: needsCredClean,
+          removeIframe: needsIframeClean,
+        })
       }
-      if (qiframe !== undefined) {
-          queryToClean.iframe = undefined
-          needsClean = true
-      }
-
-      if (needsClean) {
-          router.replace({ query: queryToClean })
-      }
-
     } catch (err) {
       console.error('Error cargando sede:', err)
     }
