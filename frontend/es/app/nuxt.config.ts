@@ -14,7 +14,7 @@ export default defineNuxtConfig({
     'pinia-plugin-persistedstate/nuxt',
   ],
 
-  css: ['~/assets/base.css'],
+  css: ['~/assets/base.css','~/assets/css/main.css'],
 
   fonts: {
     families: [

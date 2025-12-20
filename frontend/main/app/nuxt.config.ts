@@ -3,5 +3,6 @@ export default defineNuxtConfig({
   compatibilityDate: '2025-07-15',
   devtools: { enabled: true },
   modules: ['@nuxt/eslint', '@nuxt/image', '@nuxt/ui'],
-  css: ['~/assets/base.css'],
+  css: ['~/assets/base.css','~/assets/css/main.css'],
+
 })

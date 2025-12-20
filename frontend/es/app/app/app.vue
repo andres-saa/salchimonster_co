@@ -1,7 +1,10 @@
 <template>
   <div>
     <NuxtLayout>
-      <NuxtPage />
+      
+      <UApp>
+        <NuxtPage />
+      </UApp>
     </NuxtLayout>
 
     <ToastContainer />
