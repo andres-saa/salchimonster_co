@@ -1307,7 +1307,7 @@ onMounted(async () => {
 /* Tus estilos originales se mantienen */
 .vicio-page { display: flex; min-height: 100vh; width: 100%; overflow-x: hidden; background: var(--bg-page); color: var(--text-primary); font-family: 'Roboto', sans-serif; }
 .vicio-map { flex: 1 1 55%; height: 100vh; background: #e2e8f0; }
-.vicio-sidebar { flex: 1 1 45%; display: flex; flex-direction: column; background: #ffffff; border-left: 1px solid var(--border-subtle); box-shadow: -5px 0 25px rgba(0, 0, 0, 0.05); max-height: 100vh; }
+.vicio-sidebar {  display: flex; flex-direction: column; background: #ffffff; border-left: 1px solid var(--border-subtle); box-shadow: -5px 0 25px rgba(0, 0, 0, 0.05); max-height: 100vh; }
 .sidebar-header { padding: 1.4rem 1.8rem 1rem; border-bottom: 1px solid var(--border-subtle); background: #ffffff; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03); position: relative; z-index: 5; }
 .sidebar-title { font-size: 0.82rem; letter-spacing: 0.18em; font-weight: 800; margin: 0 0 0.9rem; text-transform: uppercase; color: var(--text-primary); display: flex; align-items: center; gap: 0.4rem; }
 .sidebar-title::before { content: "🔥"; font-size: 1rem; }

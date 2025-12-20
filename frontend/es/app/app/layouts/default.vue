@@ -1,5 +1,7 @@
 <template>
   <div class="app-layout">
+
+    <SiteDialog></SiteDialog>
     <header
       class="app-layout__topbar"
       :style="{ top: topBarPosition }"
