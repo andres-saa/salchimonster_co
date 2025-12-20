@@ -54,44 +54,46 @@
             <div class="form-row">
               <div class="form-group full">
                 <label>{{ t('name') }}</label>
-                <input type="text" class="input-modern" v-model="user.user.name" :placeholder="t('name')" />
+                <InputText 
+                  class="input-modern" 
+                  v-model="user.user.name" 
+                  :placeholder="t('name')" 
+                />
               </div>
             </div>
 
             <div class="form-row split">
               <div class="form-group">
                 <label>{{ t('phone') }}</label>
-                <div class="phone-control">
-                  <div class="country-select" v-click-outside="() => showCountryDropdown = false">
-                    <button type="button" class="country-trigger" @click="toggleCountryDropdown">
-                      <img v-if="user.user.phone_code?.flag" :src="user.user.phone_code.flag" alt="flag">
-                      <span>{{ user.user.phone_code?.dialCode || '+57' }}</span>
-                      <Icon name="mdi:chevron-down" size="14" />
-                    </button>
-                    
-                    <div v-if="showCountryDropdown" class="country-dropdown">
-                      <input
-                        type="text"
-                        class="search-mini"
-                        v-model="countryQuery"
-                        :placeholder="t('search_country_or_code')"
-                        ref="countryInputRef"
-                        @input="onCountryInput"
-                      >
-                      <ul>
-                        <li v-for="c in countrySuggestions" :key="c.code" @click="selectCountry(c)">
-                          <img :src="c.flag" class="flag-mini"> {{ c.name }} <small>({{ c.dialCode }})</small>
-                        </li>
-                      </ul>
-                    </div>
-                  </div>
+                <div class="phone-control-prime">
+                  <Select 
+                    v-model="user.user.phone_code" 
+                    :options="countries" 
+                    optionLabel="name"
+                    filter 
+                    :filterPlaceholder="t('search_country_or_code')"
+                    class="country-select-prime"
+                  >
+                    <template #value="slotProps">
+                      <div class="country-item-selected" v-if="slotProps.value">
+                        <img :src="slotProps.value.flag" :alt="slotProps.value.name" class="flag-mini" />
+                        <span>{{ slotProps.value.dialCode }}</span>
+                      </div>
+                      <span v-else>+57</span>
+                    </template>
+                    <template #option="slotProps">
+                      <div class="country-item-option">
+                        <img :src="slotProps.option.flag" :alt="slotProps.option.name" class="flag-mini" />
+                        <div>{{ slotProps.option.name }} <small>({{ slotProps.option.dialCode }})</small></div>
+                      </div>
+                    </template>
+                  </Select>
                   
-                  <input
-                    type="tel"
-                    class="input-modern input-phone"
+                  <InputText
+                    class="input-modern input-phone-prime"
                     v-model="user.user.phone_number"
                     @blur="formatPhoneOnBlur"
-                    :placeholder="'300 000 0000'"
+                    placeholder="300 000 0000"
                   />
                 </div>
                 <span v-if="phoneError" class="field-error">{{ phoneError }}</span>
@@ -99,7 +101,12 @@
 
               <div class="form-group">
                 <label>{{ t('email') }}</label>
-                <input type="email" class="input-modern" v-model="user.user.email" :placeholder="t('email')" />
+                <InputText 
+                  type="email" 
+                  class="input-modern" 
+                  v-model="user.user.email" 
+                  :placeholder="t('email')" 
+                />
               </div>
             </div>
           </section>
@@ -141,8 +148,7 @@
 
             <div class="form-group mt-3" v-if="!isPickup">
               <label>{{ lang === 'en' ? 'Exact Address' : 'Dirección exacta' }}</label>
-              <input 
-                type="text" 
+              <InputText 
                 class="input-modern" 
                 v-model="user.user.address" 
                 :placeholder="t('address_placeholder')" 
@@ -151,7 +157,7 @@
             
             <div v-if="isPickup && [33, 35, 36].includes(siteStore.location?.site?.site_id)" class="form-group mt-3">
               <label>{{ t('vehicle_plate') }}</label>
-              <input type="text" class="input-modern" v-model="user.user.placa" placeholder="ABC-123" />
+              <InputText class="input-modern" v-model="user.user.placa" placeholder="ABC-123" />
             </div>
           </section>
 
@@ -164,30 +170,37 @@
                   <Icon name="mdi:ticket-percent-outline" size="20" />
                   <span>{{ t('code') }}</span>
                 </div>
-                <div class="switch" :class="{ 'on': have_discount }">
-                  <div class="knob"></div>
+                <div @click.stop>
+                   <ToggleSwitch v-model="have_discount" />
                 </div>
               </div>
 
               <div v-if="have_discount" class="coupon-content">
                 <div class="coupon-input-row">
-                  <input
-                    type="text"
+                  <InputText
+                    class="input-modern"
                     v-model="temp_discount"
                     :placeholder="t('code_placeholder')"
                     :disabled="temp_code?.status === 'active'"
+                  />
+                  
+                  <Button 
+                    v-if="temp_code?.status === 'active'" 
+                    severity="danger" 
+                    text
+                    class="btn-prime-icon"
+                    @click="clearCoupon"
                   >
-                  <button v-if="temp_code?.status === 'active'" class="btn-coupon remove" @click="clearCoupon">
-                    <Icon name="mdi:trash-can-outline" />
-                  </button>
-                  <button
+                    <Icon name="mdi:trash-can-outline" size="20" />
+                  </Button>
+
+                  <Button
                     v-else
-                    class="btn-coupon apply"
+                    :label="lang === 'en' ? 'Apply' : 'Aplicar'"
+                    class="btn-prime-black"
                     @click="validateDiscount(temp_discount, { silent: false })"
                     :disabled="!temp_discount"
-                  >
-                    {{ lang === 'en' ? 'Apply' : 'Aplicar' }}
-                  </button>
+                  />
                 </div>
 
                 <div v-if="temp_code?.status" class="coupon-feedback" :class="temp_code.status === 'active' ? 'positive' : 'negative'">
@@ -211,26 +224,41 @@
 
             <div class="form-group" v-if="computedPaymentOptions.length > 0">
               <label>{{ t('payment_method') }}</label>
-              <div class="select-wrapper">
-                <Icon name="mdi:credit-card-outline" class="select-icon" />
-                <select class="input-modern with-icon" v-model="user.user.payment_method_option">
-                  <option value="" disabled selected>{{ lang === 'en' ? 'Select an option' : 'Selecciona una opción' }}</option>
-                  <option v-for="opt in computedPaymentOptions" :key="opt.id" :value="opt">
-                    {{ opt.name }}
-                  </option>
-                </select>
-                <Icon name="mdi:chevron-down" class="select-arrow" />
+              <div class="prime-select-wrapper">
+                <Select 
+                    v-model="user.user.payment_method_option" 
+                    :options="computedPaymentOptions" 
+                    optionLabel="name" 
+                    class="input-modern w-full"
+                    :placeholder="lang === 'en' ? 'Select an option' : 'Selecciona una opción'"
+                >
+                    <template #value="slotProps">
+                        <div v-if="slotProps.value" class="flex align-items-center">
+                            <Icon name="mdi:credit-card-outline" class="mr-2" style="vertical-align: middle; margin-right: 8px;" />
+                            {{ slotProps.value.name }}
+                        </div>
+                        <span v-else>
+                            {{ slotProps.placeholder }}
+                        </span>
+                    </template>
+                    <template #option="slotProps">
+                        <div class="flex align-items-center">
+                             {{ slotProps.option.name }}
+                        </div>
+                    </template>
+                </Select>
               </div>
             </div>
 
             <div class="form-group">
               <label>{{ t('notes') }}</label>
-              <textarea
+              <Textarea
                 class="input-modern"
                 rows="3"
+                autoResize
                 v-model="store.order_notes"
                 :placeholder="t('additional_notes')"
-              ></textarea>
+              />
             </div>
           </section>
 
@@ -247,7 +275,7 @@
 
 <script setup>
 import { ref, onMounted, watch, computed } from 'vue'
-import resumen from '../resumen.vue' // Ajusta la ruta si es necesario
+import resumen from '../resumen.vue'
 import { usecartStore, useSitesStore, useUserStore } from '#imports'
 import { URI } from '~/service/conection'
 import { buildCountryOptions } from '~/service/utils/countries'
@@ -295,7 +323,6 @@ const computedOrderTypesVisible = computed(() => {
   if (!siteId || !sitePaymentsComplete.value.length) return []
   const siteConfig = sitePaymentsComplete.value.find(s => String(s.site_id) === String(siteId))
   if (!siteConfig || !siteConfig.order_types) return []
-  // FILTRO: Solo mostrar order_types que tengan métodos de pago activos
   return siteConfig.order_types.filter(ot => ot.methods && ot.methods.length > 0)
 })
 
@@ -320,49 +347,32 @@ const computedPaymentOptions = computed(() => {
   return selectedOrderType?.methods || []
 })
 
-// Asegura que si el tipo de orden actual no es válido o no está seleccionado, se elija el primero disponible
 const ensureValidOrderTypeForCurrentSite = () => {
   const list = computedOrderTypesVisible.value
-  if (list.length === 0) {
-    // No forzamos null si ya hay uno seleccionado que es válido, 
-    // pero si la lista está vacía, no hay nada que hacer.
-    return
-  }
+  if (list.length === 0) return
   const currentId = user.user.order_type?.id
   if (!currentId || !list.some(o => Number(o.id) === Number(currentId))) {
-    // Si no hay seleccionado o el seleccionado no está en la lista de esta sede, elige el primero
     user.user.order_type = list[0]
   }
 }
 
-// Watcher: Si cambia el tipo de orden, ajustar costos y limpiar método de pago si no es compatible
 watch(() => user.user.order_type, (newType) => {
   const currentMethodId = user.user.payment_method_option?.id
   const availableMethods = computedPaymentOptions.value
-  
-  // Si el método seleccionado ya no existe en la lista, limpiarlo
   if (!availableMethods.some(m => m.id === currentMethodId)) {
     user.user.payment_method_option = null
   }
 })
 
-
-
 const syncOrderTypeEffects = () => {
   const newType = user.user.order_type
-
   if (newType?.id == 2 || newType?.id == 6) {
     siteStore.location.tem_cost = siteStore.location.neigborhood.delivery_price
     siteStore.location.neigborhood.delivery_price = 0
   } else {
-    const cost =
-      user.user.site?.delivery_cost_cop ??
-      siteStore?.delivery_price ??
-      siteStore.location.tem_cost
-
+    const cost = user.user.site?.delivery_cost_cop ?? siteStore?.delivery_price ?? siteStore.location.tem_cost
     if (cost != null) siteStore.location.neigborhood.delivery_price = cost
   }
-
   const currentMethodId = user.user.payment_method_option?.id
   const availableMethods = computedPaymentOptions.value
   if (!availableMethods.some(m => m.id === currentMethodId)) {
@@ -374,58 +384,19 @@ onMounted(() => {
   syncOrderTypeEffects()
 })
 
-watch(
-  () => user.user.order_type,
-  () => {
-    syncOrderTypeEffects()
-  }
-)
+watch(() => user.user.order_type, () => { syncOrderTypeEffects() })
 
-
-
-/* ================= LÓGICA DE TELÉFONO ================= */
+/* ================= LÓGICA DE TELÉFONO (Simplificada gracias a PrimeVue Select) ================= */
 const phoneError = ref('')
-const countrySuggestions = ref([])
 const countries = ref([])
-const showCountryDropdown = ref(false)
-const countryQuery = ref('')
-const countryInputRef = ref(null)
 
-const norm = (s) => (s || '').toString().trim().toLowerCase()
-const onlyDigits = (s) => (s || '').replace(/\D+/g, '')
-
+// Ya no necesitamos la lógica manual de "showCountryDropdown" ni "countryQuery"
 const initCountries = () => {
   countries.value = buildCountryOptions(lang.value).map(c => ({
     ...c,
     dialDigits: (c.dialCode || '').replace(/\D+/g, ''),
     flag: `https://flagcdn.com/h20/${c.code.toLowerCase()}.png`
   }))
-  countrySuggestions.value = countries.value.slice(0, 50)
-}
-
-const onCountryInput = () => {
-  const q = norm(countryQuery.value)
-  const qDigits = onlyDigits(countryQuery.value)
-  if (!q) { countrySuggestions.value = countries.value.slice(0, 50); return }
-  countrySuggestions.value = countries.value.filter(c => {
-    if (norm(c.name).includes(q) || norm(c.code).includes(q)) return true
-    if (qDigits && c.dialDigits.startsWith(qDigits)) return true
-    return false
-  }).slice(0, 50)
-}
-
-const toggleCountryDropdown = () => {
-  showCountryDropdown.value = !showCountryDropdown.value
-  if(showCountryDropdown.value) {
-    countrySuggestions.value = countries.value.slice(0, 50)
-    setTimeout(() => countryInputRef.value?.focus(), 100)
-  }
-}
-
-const selectCountry = (c) => {
-  user.user.phone_code = c
-  showCountryDropdown.value = false
-  countryQuery.value = ''
 }
 
 const formatPhoneOnBlur = () => {
@@ -468,13 +439,11 @@ const validateDiscount = async (code, opts = { silent: false }) => {
     if (!silent) alert('Selecciona una sede primero')
     return
   }
-
   const finalCode = (code || '').toString().trim()
   if (!finalCode) return
 
   try {
     const res = await (await fetch(`${URI}/discount/get-discount-by-code/${encodeURIComponent(finalCode)}`)).json()
-
     if (res) {
       if (Array.isArray(res.sites) && !res.sites.some(s => String(s.site_id) === String(site.site_id))) {
         temp_code.value = { status: 'invalid_site' }
@@ -482,7 +451,6 @@ const validateDiscount = async (code, opts = { silent: false }) => {
         if (!silent) alert(lang.value === 'en' ? 'Coupon not valid for this site' : 'Este cupón no es válido para esta sede.')
         return
       }
-
       store.applyCoupon(res)
       temp_code.value = {
         ...res,
@@ -510,31 +478,24 @@ const clearCoupon = () => {
 const autoApplyCouponIfNeeded = async () => {
   const siteId = siteStore.location?.site?.site_id
   if (!siteId) return
-
   const appliedCode = store.applied_coupon?.code ? String(store.applied_coupon.code) : ''
   const draftCode = store.coupon_ui?.draft_code ? String(store.coupon_ui.draft_code) : ''
   const enabled = !!store.coupon_ui?.enabled
-
   const candidate = appliedCode || (enabled ? draftCode : '')
   if (!candidate) return
 
-  // Evitar re-validar infinitamente el mismo código en la misma sede
   const key = `${siteId}|${candidate}`
   if (lastAutoApplyKey.value === key) return
   lastAutoApplyKey.value = key
 
   have_discount.value = true
-  // Asegurarnos de que temp_discount esté lleno visualmente
   if (!temp_discount.value) temp_discount.value = candidate
-
   await validateDiscount(candidate, { silent: true })
 }
 
-// Watch global del cupón para actualizar el estado visual (temp_code)
 watch(() => store.applied_coupon, (newCoupon) => {
   if (newCoupon && newCoupon.code) {
     have_discount.value = true
-    // Evitamos bucle si ya es igual
     if (temp_discount.value !== newCoupon.code) {
         temp_discount.value = newCoupon.code
     }
@@ -544,7 +505,6 @@ watch(() => store.applied_coupon, (newCoupon) => {
       discount_name: newCoupon.discount_name || newCoupon.name || 'Descuento'
     }
   } else {
-    // Si se quita el cupón, limpiamos el estado visual de éxito
     if(temp_code.value?.status === 'active') temp_code.value = {}
   }
 }, { immediate: true, deep: true })
@@ -555,28 +515,18 @@ watch(() => store.coupon_ui?.draft_code, async () => {
 
 /* ================= LÓGICA DE REDIRECCIÓN Y CAMBIO DE SEDE ================= */
 watch(() => siteStore.location?.site?.site_id, async (newSiteId, oldSiteId) => {
-  
-  // Cuando App.vue restaura el sitio desde el Hash, este watch se dispara.
-  // Aseguramos de recalcular el tipo de orden válido.
   ensureValidOrderTypeForCurrentSite()
   await autoApplyCouponIfNeeded()
-
-  // REDIRECCIÓN (Cohete): Solo si cambia de una sede válida A OTRA sede válida.
-  // Evitamos redirección si oldSiteId es undefined (carga inicial)
   if (newSiteId && oldSiteId && String(newSiteId) !== String(oldSiteId)) {
     const newSiteData = siteStore.location.site
     await handleSiteChangeRedirect(newSiteData)
   }
 })
 
-
-
 const generateUUID = () => {
-  // Intenta usar la nativa si existe y está disponible
   if (typeof crypto !== 'undefined' && crypto.randomUUID) {
     return crypto.randomUUID();
   }
-  // Fallback manual compatible con todos los navegadores
   return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
     const r = (Math.random() * 16) | 0;
     const v = c === 'x' ? r : (r & 0x3) | 0x8;
@@ -584,50 +534,33 @@ const generateUUID = () => {
   });
 };
 
-
-// Función que empaqueta la data y redirecciona
 const handleSiteChangeRedirect = async (targetSite) => {
   isRedirecting.value = true
   targetSiteName.value = targetSite.site_name || 'Nueva Sede'
-
   try {
     const hash = generateUUID()
-    
-    // 1. Aplanamos y aseguramos el barrio (Neighborhood)
     const currentNb = siteStore.location.neigborhood || {}
-    
-    // Forzamos la captura del nombre buscando en las propiedades comunes
     const nbName = currentNb.name || currentNb.neighborhood_name || ''
-    
-    // 2. Construimos el objeto del barrio limpio para enviar
     const cleanNeighborhood = {
-      ...currentNb, // Copiamos todo lo que tenga
-      name: nbName, // Aseguramos que 'name' exista sí o sí
-      // Si a veces el ID viene como 'id' o 'neighborhood_id', aseguramos ambos
+      ...currentNb,
+      name: nbName,
       id: currentNb.id || currentNb.neighborhood_id,
       neighborhood_id: currentNb.neighborhood_id || currentNb.id,
       delivery_price: currentNb.delivery_price
     }
 
-    // =========================================================================
-    // PAYLOAD
-    // =========================================================================
     const payload = {
       user: {
         ...user.user,
         site: targetSite, 
-        address: user.user.address // Persistimos la dirección escrita
+        address: user.user.address 
       },
       cart: store.cart, 
-      
-      // Data para restaurar la ubicación visual
       site_location: targetSite, 
       location_meta: {
         city: siteStore.location.city,
-        // AQUÍ ESTÁ LA CLAVE: Enviamos el objeto limpio y asegurado
         neigborhood: cleanNeighborhood 
       },
-
       discount: store.applied_coupon || null,
       coupon_ui: store.coupon_ui || null
     }
@@ -644,39 +577,29 @@ const handleSiteChangeRedirect = async (targetSite) => {
       isRedirecting.value = false
       return
     }
-
     const isDev = window.location.hostname.includes('localhost')
     const protocol = window.location.protocol
     const targetUrl = isDev 
       ? `${protocol}//${subdomain}.localhost:3000/pay?hash=${hash}`
       : `https://${subdomain}.${MAIN_DOMAIN}/pay?hash=${hash}`
-
     window.location.href = targetUrl
-
   } catch (error) {
     console.error('Redirection error:', error)
     isRedirecting.value = false
   }
 }
 
-// ON MOUNTED
 onMounted(async () => {
   initCountries()
   if (!user.user.phone_code) {
     const defaultCode = lang.value === 'en' ? 'US' : 'CO'
     user.user.phone_code = countries.value.find(c => c.code === defaultCode)
   }
-
   try {
-    // Cargamos configuraciones de pagos/ordenes
     const spData = await (await fetch(`${URI}/site-payments-complete`)).json()
     sitePaymentsComplete.value = spData || []
-    
-    // Una vez cargada la configuración, verificamos validez de orden
     ensureValidOrderTypeForCurrentSite()
   } catch (e) { console.error(e) }
-
-  // Si App.vue restauró datos antes de que este componente montara, aplicamos cupón si existe
   await autoApplyCouponIfNeeded()
 })
 
@@ -709,9 +632,7 @@ watch(lang, initCountries)
   padding-bottom: 2rem;
 }
 
-/* =========================================
-   ANIMACIÓN DE REDIRECCIÓN (COHETE)
-   ========================================= */
+/* Redirección (Rocket) */
 .redirect-overlay {
   position: fixed; top: 0; left: 0; width: 100vw; height: 100dvh;
   background: rgba(255, 255, 255, 0.85); backdrop-filter: blur(12px);
@@ -760,35 +681,49 @@ watch(lang, initCountries)
 .tab-item.is-active { background: #000000; color: #ffffff; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
 .hidden-radio { position: absolute; opacity: 0; width: 0; height: 0; }
 
-/* FORMULARIOS */
+/* FORMULARIOS & OVERRIDES PRIMEVUE */
 .form-row { margin-bottom: 1rem; }
 .form-row.split { display: grid; grid-template-columns: 1fr; gap: 1rem; }
 @media(min-width: 600px) { .form-row.split { grid-template-columns: 1fr 1fr; } }
 label { display: block; font-size: 0.85rem; font-weight: 600; margin-bottom: 0.5rem; color: #374151; }
+
+/* Clase para estilizar componentes de PrimeVue igual que el original */
 .input-modern {
-  width: 100%; padding: 0.75rem 1rem; border: 1px solid var(--border);
-  border-radius: var(--radius-sm); font-size: 0.95rem; background: #fff; transition: all 0.2s; outline: none;
+  width: 100%;
+  border-radius: var(--radius-sm);
+  /* PrimeVue usa variables a veces, forzamos nuestros colores */
+  background: #fff;
 }
-.input-modern:focus { border-color: var(--border-focus); box-shadow: 0 0 0 3px rgba(0,0,0,0.05); }
-textarea.input-modern { resize: vertical; min-height: 80px; }
+/* Asegurar altura consistente */
+:deep(.p-inputtext) {
+    padding: 0.75rem 1rem;
+    font-size: 0.95rem;
+    border-color: var(--border);
+}
+:deep(.p-inputtext:focus), :deep(.p-select:focus) {
+    border-color: var(--border-focus);
+    box-shadow: 0 0 0 3px rgba(0,0,0,0.05);
+}
 
 /* TELÉFONO */
-.phone-control { display: flex; gap: 0.5rem; }
-.country-select { position: relative; }
-.country-trigger {
-  height: 100%; display: flex; align-items: center; gap: 0.4rem; padding: 0 0.8rem;
-  background: #fff; border: 1px solid var(--border); border-radius: var(--radius-sm); cursor: pointer; min-width: 90px;
+.phone-control-prime { display: flex; gap: 0.5rem; }
+
+/* Ajustes para el Select de PrimeVue del país */
+.country-select-prime {
+    width: 120px !important;
 }
-.country-trigger img { width: 20px; border-radius: 2px; }
-.country-dropdown {
-  position: absolute; top: 110%; left: 0; z-index: 50; background: #fff; border: 1px solid var(--border);
-  border-radius: var(--radius-sm); width: 240px; box-shadow: var(--shadow-hover); padding: 0.5rem;
+:deep(.country-select-prime .p-select-label) {
+    padding: 0.6rem 0.5rem !important; /* Ajuste fino para alinear con InputText */
+    display: flex;
+    align-items: center;
 }
-.search-mini { width: 100%; padding: 0.4rem; margin-bottom: 0.5rem; border: 1px solid #eee; border-radius: 4px; font-size: 0.85rem; }
-.country-dropdown ul { list-style: none; padding: 0; margin: 0; max-height: 200px; overflow-y: auto; }
-.country-dropdown li { padding: 0.5rem; display: flex; align-items: center; gap: 0.5rem; cursor: pointer; font-size: 0.9rem; border-radius: 4px; }
-.country-dropdown li:hover { background: #f3f4f6; }
-.flag-mini { width: 18px; }
+.country-item-selected, .country-item-option {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+.flag-mini { width: 18px; border-radius: 2px; }
+
 .field-error { font-size: 0.8rem; color: var(--error); margin-top: 4px; display: block; }
 
 /* ADDRESS CARD */
@@ -797,7 +732,6 @@ textarea.input-modern { resize: vertical; min-height: 80px; }
   border-radius: var(--radius-sm); cursor: pointer; transition: all 0.2s; background: #fff;
 }
 .address-card:hover { border-color: #000; box-shadow: var(--shadow-card); }
-.address-card.no-address { border-style: dashed; background: #f9fafb; }
 .icon-box-addr {
   width: 40px; height: 40px; background: #f3f4f6; border-radius: 50%;
   display: flex; align-items: center; justify-content: center; font-size: 1.2rem; color: #666;
@@ -810,20 +744,25 @@ textarea.input-modern { resize: vertical; min-height: 80px; }
 .badge-delivery { background: #ecfdf5; color: #047857; padding: 2px 6px; border-radius: 4px; font-weight: 600; font-size: 0.75rem; }
 .action-arrow { color: #9ca3af; }
 
-/* CUPONES & SELECTS */
+/* CUPONES */
 .coupon-wrapper { border: 1px solid var(--border); border-radius: var(--radius-sm); overflow: hidden; margin-bottom: 1.5rem; }
 .coupon-toggle { display: flex; justify-content: space-between; align-items: center; padding: 0.8rem 1rem; background: #f9fafb; cursor: pointer; }
 .coupon-left { display: flex; gap: 0.5rem; align-items: center; font-weight: 600; font-size: 0.9rem; }
-.switch { width: 36px; height: 20px; background: #d1d5db; border-radius: 20px; position: relative; transition: 0.3s; }
-.switch.on { background: #000; }
-.knob { width: 16px; height: 16px; background: #fff; border-radius: 50%; position: absolute; top: 2px; left: 2px; transition: 0.3s; }
-.switch.on .knob { transform: translateX(16px); }
+
 .coupon-content { padding: 1rem; border-top: 1px solid var(--border); }
-.coupon-input-row { display: flex; gap: 0.5rem; }
-.coupon-input-row input { flex: 1; padding: 0.5rem; border: 1px solid var(--border); border-radius: 6px; outline: none; }
-.btn-coupon { padding: 0 1rem; border-radius: 6px; border: none; font-weight: 600; cursor: pointer; font-size: 0.9rem; }
-.apply { background: #000; color: #fff; }
-.remove { background: #fee2e2; color: #ef4444; }
+.coupon-input-row { display: flex; gap: 0.5rem; align-items: stretch; }
+
+/* Botón PrimeVue Negro */
+.btn-prime-black {
+    background: #000 !important;
+    border: 1px solid #000 !important;
+    color: #fff !important;
+    font-weight: 600;
+}
+.btn-prime-icon {
+    padding: 0 1rem !important;
+}
+
 .coupon-feedback { margin-top: 0.8rem; font-size: 0.85rem; display: flex; gap: 0.6rem; align-items: flex-start; font-weight: 500; padding: 0.6rem; border-radius: 6px; }
 .coupon-feedback.positive { color: var(--success); background: #ecfdf5; }
 .coupon-feedback.negative { color: var(--error); background: #fef2f2; }
@@ -831,10 +770,8 @@ textarea.input-modern { resize: vertical; min-height: 80px; }
 .discount-title { font-weight: 700; color: #065f46; font-size: 0.9rem; text-transform: uppercase; }
 .discount-amount { font-size: 0.85rem; color: #047857; margin-top: 2px; }
 
-.select-wrapper { position: relative; }
-.with-icon { padding-left: 2.5rem; appearance: none; }
-.select-icon { position: absolute; left: 0.8rem; top: 50%; transform: translateY(-50%); color: #6b7280; pointer-events: none; }
-.select-arrow { position: absolute; right: 0.8rem; top: 50%; transform: translateY(-50%); pointer-events: none; font-size: 1.2rem; }
+.prime-select-wrapper { width: 100%; }
+.w-full { width: 100%; }
 
 .mt-3 { margin-top: 1rem; }
 </style>

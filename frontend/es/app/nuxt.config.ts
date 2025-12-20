@@ -1,3 +1,5 @@
+import Aura from '@primevue/themes/aura'; // 1. Importar el tema
+
 export default defineNuxtConfig({
   compatibilityDate: '2025-07-15',
   devtools: { enabled: true },
@@ -5,16 +7,35 @@ export default defineNuxtConfig({
   build: {
     transpile: ['i18n-iso-countries']
   },
-  
+
   modules: [
     '@nuxt/eslint',
-    '@nuxt/image', // Asegúrate de usar <NuxtImg> en lugar de <img> en tus componentes
+    '@nuxt/image',
     '@nuxt/ui',
     '@pinia/nuxt',
     'pinia-plugin-persistedstate/nuxt',
+    '@primevue/nuxt-module' // 2. Agregar el módulo oficial
   ],
 
-  css: ['~/assets/base.css'],
+  // 3. Agregar CSS de PrimeIcons para que funcionen los iconos internos de los componentes
+  css: [
+    '~/assets/base.css',
+    'primeicons/primeicons.css' 
+  ],
+
+  // 4. Configuración de PrimeVue
+  primevue: {
+    options: {
+      theme: {
+        preset: Aura, // Usa el tema Aura
+        options: {
+            darkModeSelector: '.dark', // Sincroniza el modo oscuro con Nuxt UI
+        }
+      },
+      ripple: true // Efecto de onda en botones
+    },
+    autoImport: true // Importa componentes automáticamente (ej: <Button>, <InputText>)
+  },
 
   fonts: {
     families: [
@@ -36,38 +57,21 @@ export default defineNuxtConfig({
     },
   },
 
-  // 🧊 ISR / SWR: Configuración de caché
-  routeRules: {
-    // Home se regenera cada 10 min
-    '/': { isr: 600 },
-    // Sedes se regenera cada 10 min (600s)
-    '/sedes': { isr: 10 },
- 
-    // Reemplaza '/ayuda' por la ruta donde usas este componente
-    '/pqr': { isr: 3600 } ,
- 
-    // Opcional: Cachear assets estáticos agresivamente
-    '/_nuxt/**': { headers: { 'cache-control': 's-maxage=31536000' } },
-  },
+  // routeRules: {
+  //   '/': { isr: 600 },
+  //   '/sedes': { isr: 10 },
+  //   '/pqr': { isr: 3600 } ,
+  //   '/_nuxt/**': { headers: { 'cache-control': 's-maxage=31536000' } },
+  // },
 
-  // 🖼️ OPTIMIZACIÓN EXTREMA DE IMÁGENES
   image: {
-    // Dominios externos permitidos para optimización.
-    // IMPORTANTE: Agregué el dominio de tu backend que vi en el código anterior.
     domains: [
       'img.restpe.com', 
       'backend.salchimonster.com',
       'gestion.salchimonster.com' 
     ],
-    
-    // Prioridad: AVIF (más ligero) -> WebP (estándar) -> JPG/PNG (fallback)
     format: ['avif', 'webp'],
-    
-    // Calidad 75 es el punto dulce entre peso visual y tamaño de archivo.
-    // 80 suele ser demasiado alto para web móvil.
     quality: 75,
-    
-    // Generación de tamaños responsivos exactos
     screens: {
       'xs': 320,
       'sm': 640,
@@ -76,11 +80,7 @@ export default defineNuxtConfig({
       'xl': 1280,
       'xxl': 1536
     },
-    
-    // Evita generar imágenes 3x innecesarias que consumen datos
     densities: [1, 2],
-    
-    // Configuración predeterminada para el componente <NuxtImg>
     presets: {
       default: {
         modifiers: {
