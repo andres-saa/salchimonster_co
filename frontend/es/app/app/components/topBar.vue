@@ -1,6 +1,14 @@
 <script setup>
 import { ref, computed, onMounted, onBeforeUnmount, nextTick, watch } from 'vue'
-import { useSitesStore, useSidebarStore, useUserStore, useUIStore, texts } from '#imports'
+import {
+  useRoute,
+  useRouter,
+  useSitesStore,
+  useSidebarStore,
+  useUserStore,
+  useUIStore,
+  texts
+} from '#imports'
 
 const uistore = useUIStore()
 const route = useRoute()
@@ -39,6 +47,13 @@ if (!user.lang || !user.lang.name) {
 
 // Dropdown idioma
 const isLangOpen = ref(false)
+const langButtonRef = ref(null)
+const langMenuRef = ref(null)
+
+const setLang = (lang) => {
+  user.lang = lang
+  isLangOpen.value = false
+}
 
 // --- refs para menús / "Más" ---
 const menusContainerRef = ref(null)
@@ -50,8 +65,8 @@ const isMoreOpen = ref(false)
 const windowWidth = ref(0)
 
 // CONFIG: cuántos menús según ancho
-const menuVisibilityConfig = [ 
-   { maxWidth: 900, visible: 2 },
+const menuVisibilityConfig = [
+  { maxWidth: 900, visible: 2 },
   { maxWidth: 1024, visible: 3 },
   { maxWidth: 1070, visible: 4 },
   { maxWidth: 1280, visible: 5 },
@@ -66,7 +81,7 @@ const isLoggedIn = computed(() => {
 })
 
 const isIframe = computed(() => {
-  return user.user.iframe 
+  return user.user.iframe
 })
 
 // Acción: Nuevo Pedido (Redirige al 3001)
@@ -92,7 +107,7 @@ const parseJwt = (token) => {
   try {
     const base64Url = token.split('.')[1]
     const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/')
-    
+
     // Decodificación compatible con caracteres especiales (utf-8)
     const jsonPayload = decodeURIComponent(
       window.atob(base64)
@@ -139,8 +154,8 @@ const menusAll = computed(() => {
   ]
 
   const menusLogueados = [
-    { label: 'Menu', to: '/' }, 
-    { label: t.rastrear || 'Rastrear', to: `/rastrear` },
+    { label: 'Menu', to: '/' },
+    { label: t.rastrear || 'Rastrear', to: `/rastrear` }
   ]
 
   return isLoggedIn.value ? menusLogueados : menusPublicos
@@ -180,7 +195,9 @@ const handleResize = () => {
 }
 
 const getVisibleCountForWidth = (width, totalMenus) => {
-  const rule = menuVisibilityConfig.find((rule) => width <= rule.maxWidth) || menuVisibilityConfig[menuVisibilityConfig.length - 1]
+  const rule =
+    menuVisibilityConfig.find((rule) => width <= rule.maxWidth) ||
+    menuVisibilityConfig[menuVisibilityConfig.length - 1]
   if (rule.visible === 'all') return totalMenus
   return Math.min(rule.visible, totalMenus)
 }
@@ -188,10 +205,16 @@ const getVisibleCountForWidth = (width, totalMenus) => {
 const recalcMenus = () => {
   const allMenus = menusAll.value
   if (!windowWidth.value) {
-    visibleMenus.value = allMenus; overflowMenus.value = []; isMoreOpen.value = false; return
+    visibleMenus.value = allMenus
+    overflowMenus.value = []
+    isMoreOpen.value = false
+    return
   }
   if (windowWidth.value <= 900) {
-    visibleMenus.value = allMenus; overflowMenus.value = []; isMoreOpen.value = false; return
+    visibleMenus.value = allMenus
+    overflowMenus.value = []
+    isMoreOpen.value = false
+    return
   }
 
   const total = allMenus.length
@@ -203,23 +226,62 @@ const recalcMenus = () => {
 
 const hasOverflow = computed(() => overflowMenus.value.length > 0)
 
+// --- CERRAR DROPDOWNS (CLICK AFUERA / ESC / CAMBIO DE RUTA) ---
+const onDocClick = (e) => {
+  // Idioma
+  if (isLangOpen.value) {
+    const btn = langButtonRef.value
+    const menu = langMenuRef.value
+    const inside = btn?.contains(e.target) || menu?.contains(e.target)
+    if (!inside) isLangOpen.value = false
+  }
+}
+
+const onKeyDown = (e) => {
+  if (e.key === 'Escape') {
+    isLangOpen.value = false
+    isMoreOpen.value = false
+    isProfileOpen.value = false
+  }
+}
+
+watch(
+  () => route.path,
+  () => {
+    isLangOpen.value = false
+    isMoreOpen.value = false
+    isProfileOpen.value = false
+  }
+)
+
 onMounted(() => {
   handleResize()
   if (typeof window !== 'undefined') window.addEventListener('resize', handleResize)
+  if (typeof document !== 'undefined') {
+    document.addEventListener('click', onDocClick, true)
+    document.addEventListener('keydown', onKeyDown)
+  }
+
   siteStore.initStatusWatcher()
   nextTick().then(() => recalcMenus())
 })
 
 onBeforeUnmount(() => {
   if (typeof window !== 'undefined') window.removeEventListener('resize', handleResize)
+  if (typeof document !== 'undefined') {
+    document.removeEventListener('click', onDocClick, true)
+    document.removeEventListener('keydown', onKeyDown)
+  }
 })
 
-watch([menusAll, windowWidth], () => { nextTick().then(() => recalcMenus()) }, { immediate: true })
+watch([menusAll, windowWidth], () => {
+  nextTick().then(() => recalcMenus())
+}, { immediate: true })
 </script>
 
 <template>
   <div class="app-topbar-wrapper">
-    
+
     <div v-if="!isOpen" class="closed-ribbon-container">
       <div class="marquee-track">
         <div class="marquee-content">
@@ -237,12 +299,12 @@ watch([menusAll, windowWidth], () => { nextTick().then(() => recalcMenus()) }, {
 
     <header class="app-topbar-container">
       <div class="header-inner">
-        
+
         <NuxtLink to="/" class="logo-link">
           <div class="logo-sesion">
-            <button 
-              v-if="isLoggedIn" 
-              @click.prevent="goToNewOrder" 
+            <button
+              v-if="isLoggedIn"
+              @click.prevent="goToNewOrder"
               class="new"
               type="button"
             >
@@ -265,10 +327,10 @@ watch([menusAll, windowWidth], () => { nextTick().then(() => recalcMenus()) }, {
         </NuxtLink>
 
         <nav class="menus" ref="menusContainerRef">
-          <NuxtLink 
-            v-for="item in visibleMenus" 
-            :key="item.to" 
-            :to="item.to" 
+          <NuxtLink
+            v-for="item in visibleMenus"
+            :key="item.to"
+            :to="item.to"
             class="menu-item"
             :class="{ 'menu-item--active': isActiveRoute(item.to) }"
           >
@@ -279,12 +341,12 @@ watch([menusAll, windowWidth], () => { nextTick().then(() => recalcMenus()) }, {
             <button type="button" class="more-button" ref="moreButtonRef" @click="isMoreOpen = !isMoreOpen">
               Más <Icon name="mdi:chevron-down" class="more-chevron" />
             </button>
-            
+
             <transition name="fade-slide">
               <ul v-if="isMoreOpen" class="dropdown-menu more-dropdown">
                 <li v-for="item in overflowMenus" :key="item.to">
-                  <NuxtLink 
-                    :to="item.to" 
+                  <NuxtLink
+                    :to="item.to"
                     class="dropdown-item"
                     :class="{ 'menu-item--active': isActiveRoute(item.to) }"
                     @click="isMoreOpen = false"
@@ -297,12 +359,12 @@ watch([menusAll, windowWidth], () => { nextTick().then(() => recalcMenus()) }, {
           </div>
 
           <div class="social-icons">
-            <a 
-              v-for="net in socialLinks" 
-              :key="net.name" 
-              :href="net.url" 
-              class="social-link" 
-              target="_blank" 
+            <a
+              v-for="net in socialLinks"
+              :key="net.name"
+              :href="net.url"
+              class="social-link"
+              target="_blank"
               rel="noopener noreferrer"
             >
               <Icon :name="net.icon" class="social-icon" />
@@ -311,13 +373,52 @@ watch([menusAll, windowWidth], () => { nextTick().then(() => recalcMenus()) }, {
         </nav>
 
         <div class="header-actions">
-          
+
+          <!-- 🔤 Selector de idioma -->
+          <div class="lang-selector">
+            <button
+              ref="langButtonRef"
+              type="button"
+              class="lang-trigger"
+              :aria-expanded="isLangOpen"
+              aria-haspopup="listbox"
+              @click.stop="isLangOpen = !isLangOpen"
+              title="Idioma"
+            >
+              <img :src="user.lang?.flag" alt="" class="lang-flag" />
+              <span class="lang-code">{{ user.lang?.name || 'ES' }}</span>
+              <Icon name="mdi:chevron-down" class="lang-chevron" />
+            </button>
+
+            <transition name="fade-slide">
+              <ul
+                v-if="isLangOpen"
+                ref="langMenuRef"
+                class="dropdown-menu lang-dropdown"
+                role="listbox"
+              >
+                <li v-for="lng in languages" :key="lng.name">
+                  <button
+                    type="button"
+                    class="dropdown-item lang-item"
+                    :class="{ 'is-selected': user.lang?.name === lng.name }"
+                    @click="setLang(lng)"
+                  >
+                    <img :src="lng.flag" alt="" class="lang-flag" />
+                    <span>{{ lng.label }}</span>
+                    <Icon v-if="user.lang?.name === lng.name" name="mdi:check" class="lang-check" />
+                  </button>
+                </li>
+              </ul>
+            </transition>
+          </div>
+
           <button type="button" class="action-btn search-btn" @click="handleSearch" title="Buscar">
             <Icon name="mdi:magnify" class="action-icon" />
           </button>
 
           <div v-if="isLoggedIn && userInfo" class="user-profile-wrapper">
-            <button class="profile-trigger" @click="toggleProfile">
+            <button class="profile-trigger" @click.stop="toggleProfile">
               <img :src="userPhotoUrl" alt="User" class="profile-avatar" />
               <span class="profile-name">{{ userInfo.name }}</span>
             </button>
@@ -346,22 +447,20 @@ watch([menusAll, windowWidth], () => { nextTick().then(() => recalcMenus()) }, {
             </transition>
           </div>
 
-
- 
-          <button 
-            v-if="isLoggedIn && !isIframe" 
-            @click.prevent="handleLogout" 
-            class="new" 
+          <button
+            v-if="isLoggedIn && !isIframe"
+            @click.prevent="handleLogout"
+            class="new"
             style="background-color: #333; margin-left: 0.5rem;"
             type="button"
           >
             cerrar
           </button>
-          
-          <button 
-            type="button" 
+
+          <button
+            type="button"
             class="icon-button burger-button"
-            :class="{ 'burger-visible': !hasOverflow }" 
+            :class="{ 'burger-visible': !hasOverflow }"
             @click="toggleSidebar"
           >
             <Icon name="mdi:menu" class="header-icon" />
@@ -569,7 +668,7 @@ watch([menusAll, windowWidth], () => { nextTick().then(() => recalcMenus()) }, {
 }
 .more-button:hover { background: #f9f9f9; border-color: #ccc; }
 
-/* --- DROPDOWNS --- */
+/* --- DROPDOWNS (base) --- */
 .dropdown-menu {
   position: absolute;
   top: calc(100% + 10px);
@@ -633,7 +732,68 @@ watch([menusAll, windowWidth], () => { nextTick().then(() => recalcMenus()) }, {
   gap: 0.8rem;
 }
 
-/* --- PERFIL DE USUARIO (NUEVOS ESTILOS) --- */
+/* --- SELECTOR DE IDIOMA --- */
+.lang-selector {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.lang-trigger {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  padding: 0.45rem 0.65rem;
+  border-radius: 999px;
+  border: 1px solid #eee;
+  background: rgba(255,255,255,0.85);
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.lang-trigger:hover {
+  background: rgba(0,0,0,0.04);
+  border-color: #e0e0e0;
+}
+
+.lang-flag {
+  width: 18px;
+  height: 18px;
+  border-radius: 999px;
+  object-fit: cover;
+}
+
+.lang-code {
+  font-weight: 800;
+  font-size: 0.8rem;
+  color: #333;
+  letter-spacing: 0.04em;
+}
+
+.lang-chevron {
+  font-size: 1.05rem;
+  color: #666;
+}
+
+.lang-dropdown {
+  min-width: 190px;
+  z-index: 350;
+}
+
+.lang-item {
+  justify-content: space-between;
+}
+
+.lang-check {
+  font-size: 1.05rem;
+  color: var(--primary-color, #d32f2f);
+}
+
+.lang-item.is-selected {
+  background-color: rgba(185, 28, 28, 0.07);
+}
+
+/* --- PERFIL DE USUARIO --- */
 .user-profile-wrapper {
   position: relative;
   display: flex;
@@ -775,7 +935,7 @@ watch([menusAll, windowWidth], () => { nextTick().then(() => recalcMenus()) }, {
 
 /* Botón Hamburguesa */
 .burger-button {
-  display: none; 
+  display: none;
   background: transparent;
   border: none;
   cursor: pointer;
@@ -805,12 +965,15 @@ watch([menusAll, windowWidth], () => { nextTick().then(() => recalcMenus()) }, {
   .marker-icon { font-size: 1.3rem; }
   .header-actions { gap: 0.5rem; }
   .header-icon { font-size: 2rem; color: var(--primary-color, #d32f2f); }
-  
+
   /* Ajustes Profile Móvil */
-  .profile-name { display: none; } /* Ocultar nombre para ahorrar espacio */
+  .profile-name { display: none; }
   .profile-trigger { padding: 0; }
   .profile-card { right: -50px; width: 260px; }
   .profile-card::before { right: 65px; }
+
+  /* Idioma en móvil: un poquito más grande */
+  .lang-trigger { padding: 0.5rem 0.7rem; }
 }
 
 @media (max-width: 400px) {
