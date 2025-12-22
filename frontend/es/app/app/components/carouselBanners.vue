@@ -65,7 +65,7 @@ const { data: dbData } = await useFetch(`${URI}/data/${DB_ID}`, {
 const banners = computed(() => {
   // La estructura del backend suele ser { data: { co: [], us: [], es: [] } }
   const rawData = dbData.value?.data || {}
-  return rawData.co || []
+  return rawData.us || []
 })
 
 // --- LÓGICA DEL SLIDER (Tu código original optimizado) ---

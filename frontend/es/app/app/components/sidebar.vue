@@ -41,7 +41,7 @@ const shouldTeleport = computed(() => isMobile.value || isCartaRoute.value)
 // 🌍 DETECCIÓN DE PAÍS
 // =========================================
 const currentCountry = computed(() => {
-  const code = user.country?.code || user.country || 'co'
+  const code = user.country?.code || user.country || 'us'
   return String(code).toLowerCase()
 })
 
