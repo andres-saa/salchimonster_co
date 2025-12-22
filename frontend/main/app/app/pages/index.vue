@@ -851,8 +851,9 @@ const modalParamAddress = ref('')
    CITY MAP STATUS
    ======================= */
 function isGoogleMapsEnabled(cityId) {
-  const config = cityMapStatus.value.find((c) => Number(c.city_id) === Number(cityId))
-  return config ? !!config.user_google_map_status : false
+  // const config = cityMapStatus.value.find((c) => Number(c.city_id) === Number(cityId))
+  return true
+  // return config ? !!config.user_google_map_status : false
 }
 
 const isGoogleCity = computed(() => {
