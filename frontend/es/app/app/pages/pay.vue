@@ -60,8 +60,8 @@ const shouldUseGoogleMaps = computed(() => {
     </div>
 
     <div v-else>
-      <paycGoogle v-if="shouldUseGoogleMaps" />
-      <paycBarrios v-else />
+      <paycGoogle />
+      <!-- <paycBarrios v-else /> -->
     </div>
 
 
