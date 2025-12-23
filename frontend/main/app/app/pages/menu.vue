@@ -5,18 +5,18 @@
 
       <div v-if="loading" class="state-container loading">
         <div class="spinner"></div>
-        <p>Cargando menú de Colombia...</p>
+        <p>Cargando carta de España...</p>
       </div>
 
       <div v-else-if="error" class="state-container error">
         <span class="icon">⚠️</span>
-        <p>No pudimos cargar la carta.</p>
+        <p>No pudimos cargar la información.</p>
         <button @click="handleRetry" class="retry-btn">Reintentar</button>
       </div>
 
       <div v-else-if="!activeMenu || !activeCards.length" class="state-container empty">
-        <span class="icon">🇨🇴</span>
-        <p>La carta de Colombia no está disponible en este momento.</p>
+        <span class="icon">🇪🇸</span>
+        <p>Cargando carta de España...</p>
       </div>
 
       <div v-else class="image-gallery">
@@ -24,18 +24,14 @@
           v-for="card in activeCards" 
           :key="card.id"
           class="image-wrapper"
-          :class="{ 
-            'is-loaded': imageStates[card.id] === 'loaded',
-            'horizontal-layout': isHorizontalLayout,
-            'vertical-layout': !isHorizontalLayout
-          }"
+          :class="{ 'is-loaded': imageStates[card.id] === 'loaded' }"
           @click="openZoom(bigUrl(card.img_identifier))"
         >
           <div v-if="imageStates[card.id] !== 'loaded'" class="skeleton-loader"></div>
 
           <img
             :src="bigUrl(card.img_identifier)"
-            :alt="`Menú Colombia`"
+            :alt="`Carta España`"
             class="main-image"
             loading="lazy"
             @load="onImageLoad(card.id)"
@@ -59,15 +55,10 @@
       href="https://local.bot.salchimonster.com/ubicacion/1"
       class="promo-fab"
       :class="{ 'is-hidden': isScrolling }"
-      aria-label="Ver promociones"
     >
       <div class="glow-ring"></div> 
       <div class="fab-content">
-        <img
-          class="fab-icon"
-          :src="`${URI}/read-photo-product/5Dqs9XtT`"
-          alt="Promos"
-        >
+        <img class="fab-icon" :src="`${URI}/read-photo-product/5Dqs9XtT`" alt="Promos">
       </div>
     </a>
 
@@ -76,10 +67,12 @@
 
 <script setup>
 import { ref, computed, reactive, onMounted, onBeforeUnmount } from 'vue'
+import { useUserStore } from '@/stores/user'
 
+const user = useUserStore()
 const URI = 'https://backend.salchimonster.com'
 
-// --- ESTADOS UI ---
+// --- ESTADOS ---
 const windowWidth = ref(1024)
 const isScrolling = ref(false)
 let hideTimer = null
@@ -94,93 +87,53 @@ const {
   error,
   refresh
 } = await useFetch(`${URI}/data/cata-tiendas-sm`, {
-  lazy: true,
-  server: false,
-  timeout: 15000,
-  retry: 1
+  lazy: true, server: false, timeout: 15000, retry: 1
 })
 
-const handleRetry = async () => {
-  error.value = null
-  await refresh()
-}
+const handleRetry = async () => { error.value = null; await refresh() }
 
-// 1. CORRECCIÓN JSON: Acceso profundo a data.data
-const menuData = computed(() => {
-  if (!rawResponse.value) return []
-  return rawResponse.value.data?.data || []
-})
+// Acceso profundo a data.data
+const menuData = computed(() => rawResponse.value?.data?.data || [])
 
-// --- RESPONSIVE & HELPERS ---
+// --- HELPERS ---
 const isMobile = computed(() => windowWidth.value < 600)
-
-const updateWidth = () => {
-  if (typeof window === 'undefined') return
-  windowWidth.value = window.innerWidth
-}
-
+const updateWidth = () => { if (typeof window !== 'undefined') windowWidth.value = window.innerWidth }
 const bigUrl = (id) => `${URI}/read-photo-product/${id}`
 const plainUrl = (id) => `${URI}/read-photo-product/${id}`
 const normalize = (s) => String(s || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').trim()
 
-// --- LÓGICA PRINCIPAL (COLOMBIA) ---
-
-// 2. Encontrar el objeto de datos para Colombia
+// --- LÓGICA ESPAÑA ---
 const activeMenu = computed(() => {
   if (!menuData.value.length) return null
-  // Busca ID "colombia" o nombre "Colombia"
-  return menuData.value.find(m => m.id === 'co-general' || normalize(m.name).includes('Colombia')) || null
+  return menuData.value.find(m => m.id === 'co-general' || normalize(m.name).includes('colombia')) || null
 })
 
-// Variable reactiva para controlar estilos según la orientación elegida
-const isHorizontalLayout = ref(false)
-
-// 3. Obtener imágenes
 const activeCards = computed(() => {
   const menu = activeMenu.value
   if (!menu || !menu.cartas) return []
-
   const lang = 'es'
 
-  // Helper para sacar array seguro
   const getCards = (orientation) => {
-    if (menu.cartas[orientation] && Array.isArray(menu.cartas[orientation][lang])) {
-      return menu.cartas[orientation][lang]
-    }
-    return []
+    return (menu.cartas[orientation] && Array.isArray(menu.cartas[orientation][lang])) 
+      ? menu.cartas[orientation][lang] 
+      : []
   }
 
   const listHorizontal = getCards('horizontal')
   const listVertical = getCards('vertical')
 
-  // LÓGICA DE PRIORIDAD (Standard):
-  // 1. Si es móvil y hay verticales -> Usar Vertical
-  if (isMobile.value && listVertical.length > 0) {
-    isHorizontalLayout.value = false
-    return listVertical.sort((a, b) => (a.index ?? 0) - (b.index ?? 0))
-  }
-
-  // 2. Si es Desktop (o móvil sin verticales), probar Horizontal
-  if (listHorizontal.length > 0) {
-    isHorizontalLayout.value = true
-    return listHorizontal.sort((a, b) => (a.index ?? 0) - (b.index ?? 0))
-  }
-
-  // 3. Fallback final a vertical
-  if (listVertical.length > 0) {
-    isHorizontalLayout.value = false
-    return listVertical.sort((a, b) => (a.index ?? 0) - (b.index ?? 0))
-  }
-
+  // Lógica simplificada: Devuelve lo que encuentre, priorizando vertical en móvil si existe,
+  // pero como en tu JSON vertical está vacío, usará horizontal.
+  if (isMobile.value && listVertical.length > 0) return listVertical
+  if (listHorizontal.length > 0) return listHorizontal
+  if (listVertical.length > 0) return listVertical
+  
   return []
 })
 
-// --- EVENTOS UI ---
+// --- UI EVENTOS ---
 const onImageLoad = (id) => { imageStates[id] = 'loaded' }
-const onImageError = (event, id) => {
-  imageStates[id] = 'error'
-  if (event.target.src !== plainUrl(id)) event.target.src = plainUrl(id)
-}
+const onImageError = (e, id) => { imageStates[id] = 'error'; if (e.target.src !== plainUrl(id)) e.target.src = plainUrl(id) }
 const openZoom = (url) => { zoomedImage.value = url; document.body.style.overflow = 'hidden' }
 const closeZoom = () => { zoomedImage.value = null; document.body.style.overflow = '' }
 const onScroll = () => {
@@ -189,8 +142,11 @@ const onScroll = () => {
   hideTimer = setTimeout(() => { isScrolling.value = false }, 180)
 }
 
-// --- LIFECYCLE ---
 onMounted(() => {
+  if (user && (!user.lang?.name || user.lang.name !== 'es')) {
+     if(!user.lang) user.lang = {}
+     user.lang = { name: 'es', label: 'Español', flag: 'https://flagcdn.com/w20/es.png' }
+  }
   if (typeof window !== 'undefined') {
     updateWidth()
     window.addEventListener('resize', updateWidth, { passive: true })
@@ -199,8 +155,7 @@ onMounted(() => {
 })
 onBeforeUnmount(() => {
   if (typeof window !== 'undefined') {
-    window.removeEventListener('resize', updateWidth)
-    window.removeEventListener('scroll', onScroll)
+    window.removeEventListener('resize', updateWidth); window.removeEventListener('scroll', onScroll)
   }
   clearTimeout(hideTimer)
 })
@@ -213,8 +168,7 @@ onBeforeUnmount(() => {
   min-height: 100vh;
   width: 100%;
   margin: 0;
-  padding: 0;
-  padding-bottom: 80px; /* Espacio para el FAB si es necesario */
+  padding: 0; /* Sin padding global */
 }
 
 /* 2. CONTENEDOR TOTALMENTE FLUIDO */
@@ -222,7 +176,7 @@ onBeforeUnmount(() => {
   width: 100%;
   margin: 0;
   padding: 0;
-  max-width: none;
+  max-width: none; /* Quitamos límite de ancho */
 }
 
 /* 3. GALERÍA SIN ESPACIOS */
@@ -241,7 +195,7 @@ onBeforeUnmount(() => {
   display: block;
   background: #f4f4f4;
   cursor: zoom-in;
-  /* IMPORTANTE: Reset total de bordes */
+  /* IMPORTANTE: */
   border-radius: 0 !important; 
   margin: 0 !important;
   box-shadow: none !important;
@@ -251,16 +205,16 @@ onBeforeUnmount(() => {
 /* 5. IMAGEN OCUPA EL 100% DEL ANCHO */
 .main-image {
   width: 100%;
-  height: auto; /* Crece hacia abajo según su ratio */
+  height: auto; /* Mantiene proporción, crece hacia abajo */
   display: block;
-  object-fit: contain; /* Se asegura que se vea todo el ancho */
+  object-fit: contain; /* Asegura que se vea completa a lo ancho */
   opacity: 0;
   transition: opacity 0.5s ease;
-  border-radius: 0 !important;
+  border-radius: 0 !important; /* Aseguramos cero borde en la img también */
 }
 .image-wrapper.is-loaded .main-image { opacity: 1; }
 
-/* Estados */
+/* Estados de carga/error (centrados) */
 .state-container {
   display: flex; flex-direction: column; justify-content: center; align-items: center;
   min-height: 50vh; color: #666; gap: 1rem; text-align: center; padding: 2rem;
@@ -271,24 +225,21 @@ onBeforeUnmount(() => {
 }
 @keyframes spin { to { transform: rotate(360deg); } }
 
-/* Lightbox */
+/* Lightbox y FAB se mantienen igual */
 .lightbox-overlay {
-  position: fixed; inset: 0; z-index: 10000; background-color: rgba(0, 0, 0, 0.95);
-  display: flex; justify-content: center; align-items: center; backdrop-filter: blur(5px);
+  position: fixed; inset: 0; z-index: 10000; background-color: rgba(0,0,0,0.95);
+  display: flex; justify-content: center; align-items: center;
 }
 .lightbox-image { max-width: 100vw; max-height: 100vh; object-fit: contain; }
 .close-btn {
   position: absolute; top: 20px; right: 20px; background: rgba(255,255,255,0.2);
   border: none; color: white; font-size: 2rem; width: 50px; height: 50px;
-  border-radius: 50%; cursor: pointer; z-index: 10;
+  border-radius: 50%; cursor: pointer; z-index: 11;
   display: flex; align-items: center; justify-content: center;
 }
-
-/* FAB */
 .promo-fab {
-  position: fixed; right: 20px; bottom: 30px; width: 70px; height: 70px; z-index: 9000;
-  display: flex; align-items: center; justify-content: center; text-decoration: none;
-  border-radius: 50%; transform: translateX(0); transition: transform 0.3s ease, opacity 0.3s ease;
+  position: fixed; right: 20px; bottom: 30px; width: 60px; height: 60px; z-index: 9000;
+  border-radius: 50%; transition: transform 0.3s ease, opacity 0.3s ease;
 }
 .promo-fab.is-hidden { transform: translateX(150%); opacity: 0.5; pointer-events: none; }
 .fab-content {
